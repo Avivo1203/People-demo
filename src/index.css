@@ -1,0 +1,763 @@
+/* =========================
+   Global Design System (RTL)
+   ========================= */
+
+/* Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Reset */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; width: 100%; }
+
+/* Theme Tokens */
+:root {
+  --bg-grad-start: #0b1221;
+  --bg-grad-end:   #0f1f46;
+  --glass-bg: rgba(255,255,255,0.16);
+  --glass-brd: rgba(255,255,255,0.30);
+  --glass-shadow: 0 12px 36px rgba(0,0,0,0.34);
+  --text-main: #e6edf6;
+  --text-dim:  #a9b4c8;
+
+  --btn-bg:    #2563eb;
+  --btn-bg-2:  #1e40af;
+  --accent-1:  #3b82f6;
+  --accent-2:  #1e40af;
+
+  --card-bg:  rgba(255,255,255,0.08);
+  --card-brd: rgba(255,255,255,0.18);
+
+  --success: #18c964;
+  --warning: #f5b200;
+  --danger:  #ef4444;
+
+  --radius-s: 10px;
+  --radius-m: 14px;
+  --radius-l: 18px;
+}
+
+html, body {
+  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  direction: rtl;
+  background: radial-gradient(1200px 800px at 50% -10%, #152449 0%, transparent 50%),
+              linear-gradient(135deg, var(--bg-grad-start), var(--bg-grad-end));
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 999px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Links & images */
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+/* Focus ring */
+:focus-visible { outline: 2px solid var(--accent-1); outline-offset: 2px; }
+
+/* Base buttons */
+button {
+  appearance: none; border: 0; cursor: pointer;
+  padding: .6rem 1.1rem; border-radius: var(--radius-s);
+  background: linear-gradient(135deg, var(--btn-bg), var(--btn-bg-2));
+  color: white; font-weight: 700; letter-spacing: .2px;
+  box-shadow: 0 8px 20px rgba(37,99,235,.35);
+  transition: transform .12s ease, box-shadow .2s ease, opacity .2s ease;
+}
+button:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(37,99,235,.45); }
+button:active { transform: translateY(0); }
+button[aria-pressed="true"] { box-shadow: 0 0 0 3px rgba(59,130,246,.35) inset; }
+
+/* =========================
+   App container
+   ========================= */
+
+.app-container {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Leaflet full-bleed map (under the UI) */
+/* ----- Pulsing marker ----- */
+.pulse-marker {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+}
+.pulse-marker::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.25); /* sky-500 */
+  animation: pulseDot 1.9s ease-out infinite;
+}
+.pulse-core {
+  width: 12px;
+  height: 12px;
+  background: #0ea5e9; /* sky-500 */
+  border: 2px solid #fff;
+  border-radius: 999px;
+  z-index: 1;
+}
+@keyframes pulseDot {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  70% { transform: scale(2.1); opacity: 0; }
+  100% { transform: scale(0.6); opacity: 0; }
+}
+
+/* ----- Person marker ----- */
+.person-marker .person-dot {
+  font-size: 18px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
+}
+
+/* ----- Map CTAs ----- */
+.map-cta {
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: #fff;
+  border: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .1s ease, box-shadow .1s ease;
+}
+.map-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+
+/* ----- Floating panel ----- */
+.map-fab-panel {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: grid;
+  gap: 8px;
+  z-index: 4000;
+}
+.map-fab {
+  background: rgba(255,255,255,.9);
+  border: 1px solid rgba(0,0,0,.08);
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+}
+.map-fab:hover { background: #fff; }
+.map-hint {
+  background: rgba(255,255,255,.9);
+  border: 1px dashed rgba(0,0,0,.15);
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #444;
+}
+
+/* תאימות RTL בשכבות פופאפ/טולטיפ של Leaflet */
+.leaflet-popup-content { direction: rtl; text-align: right; }
+
+.leaflet-container {
+  height: 100vh !important;
+  width: 100vw !important;
+  filter: saturate(105%) contrast(102%);
+}
+.leaflet-control-container { display: none; } /* מסתיר פקדֵי ברירת מחדל של ליפלט */
+
+/* =========================
+   TopBar (Glass + Centered)
+   ========================= */
+
+.topbar-wrap {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  width: min(95vw, 1000px);
+  pointer-events: none; /* מחוץ לטופ-בר המפה קליקבילית */
+}
+
+.topbar {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-l);
+  pointer-events: auto;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-brd);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Left action cluster (Home / My Location / Clear) */
+.left-actions {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: rgba(255,255,255,.92);
+  color: #0f172a;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+  transition: transform .1s ease, box-shadow .2s ease, background .2s ease, opacity .2s ease;
+}
+.icon-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,0,0,.22); }
+.icon-btn:active { transform: translateY(0); }
+
+/* =========================
+   Tabs (Map / Status) – works with BOTH .pill-tabs and .nav-tabs
+   ========================= */
+
+/* New pill-tabs design */
+.pill-tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(520px, 92%);
+  margin: 0 auto;
+  background: rgba(255,255,255,0.8);
+  border-radius: 999px;
+  padding: 6px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.48), 0 8px 22px rgba(0,0,0,.16);
+}
+
+.pill-indicator {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: calc(50% - 12px);
+  height: calc(100% - 12px);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  box-shadow: 0 12px 28px rgba(0,0,0,.28);
+  transition: transform .25s ease;
+}
+/* אם תגדירו data-active על הקונטיינר */
+.pill-tabs[data-active="map"] .pill-indicator    { transform: translateX(0); }
+.pill-tabs[data-active="status"] .pill-indicator { transform: translateX(100%); }
+
+.pill-btn {
+  position: relative; z-index: 1;
+  background: transparent; border: 0; cursor: pointer;
+  padding: 12px 18px; border-radius: 999px;
+  font-weight: 800; color: #0f172a; letter-spacing: .2px;
+  transition: color .2s ease, transform .1s ease;
+}
+.pill-btn:hover  { transform: translateY(-1px); }
+.pill-btn.active { color: #fff; }
+
+/* Backward-compatibility for an older .nav-tabs (if NavTabs מחזיר מבנה אחר) */
+.nav-tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.8);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.45), 0 8px 22px rgba(0,0,0,.16);
+}
+.nav-tabs button {
+  background: transparent; color: #0f172a; font-weight: 800;
+  padding: 12px 18px; border-radius: 999px; border: 0;
+}
+.nav-tabs button.active {
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: #fff; box-shadow: 0 10px 24px rgba(0,0,0,.22);
+}
+
+/* =========================
+   Search Bar (centered)
+   ========================= */
+.searchbar {
+  position: relative;
+}
+
+.search-shell {
+  display: flex;
+  flex-direction:left ;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 6px 10px;
+  background-color: white;
+  position: relative;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  background: transparent;
+}
+
+.search-ico {
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 18px;
+  color: gray;
+}
+
+.clear-x {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 105%;
+  right: 0;
+  left: 0;
+  z-index: 1000;
+  background: #fff;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-result {
+  padding: 10px 14px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.search-result:hover {
+  background: #f5f5f5;
+}
+
+.result-title {
+  font-weight: bold;
+  font-size: 15px;
+  color: #333;
+}
+
+.result-sub {
+  font-size: 13px;
+  color: #777;
+}
+/* Chat CTA near search */
+.chat-cta {
+  border-radius: 12px;
+  font-weight: 800;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--btn-bg), var(--btn-bg-2));
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(37,99,235,.35);
+  transition: transform .12s ease, box-shadow .2s ease;
+}
+.chat-cta:hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(37,99,235,.45); }
+
+/* =========================
+   Panels (StatusArea card)
+   ========================= */
+
+.status-area {
+  position: fixed;
+  inset-inline: 12px;
+  bottom: 12px;
+  z-index: 850;
+  margin: 0 auto;
+  max-width: 560px;
+  background: rgba(255,255,255,.96);
+  color: #0f172a;
+  border: 1px solid rgba(255,255,255,.7);
+  border-radius: 18px 18px 14px 14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.25);
+  overflow: hidden;
+}
+
+.status-actions {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .6rem .8rem; background: #eef4ff; border-bottom: 1px solid #dbe4ff;
+}
+
+.status-list-wrapper { padding: .8rem .9rem 1rem; max-height: 42vh; overflow: auto; }
+/* ===== StatusArea: כפתורי טולבר / חיפוש קטן ===== */
+.mini-search {
+  flex: 1;
+  min-width: 140px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: .55rem .7rem;
+  color: #0f172a;
+  outline: none;
+}
+.mini-search:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96,165,250,.25);
+}
+
+/* ===== Feed ===== */
+.feed-list {
+  display: grid;
+  gap: .8rem;
+}
+.status-card {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 14px;
+  padding: .8rem .9rem;
+  box-shadow: 0 10px 24px rgba(0,0,0,.06);
+}
+.status-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .6rem;
+  align-items: center;
+  margin-bottom: .4rem;
+}
+.avatar-mini {
+  width: 36px; height: 36px; border-radius: 999px;
+  display: grid; place-items: center;
+  background: #1e40af; color: #fff; font-weight: 800;
+  box-shadow: 0 2px 6px rgba(0,0,0,.16);
+}
+.who-when .nick { font-weight: 800; }
+.meta-line {
+  display: flex; align-items: center; gap: .6rem;
+  font-size: 12px; color: #64748b;
+}
+.distance-chip {
+  background: #e0efff;
+  color: #0b3a7a;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 1px solid #c9e2ff;
+}
+.status-text { margin: .4rem 0 .6rem; }
+.status-media img, .status-media video {
+  width: 100%; border-radius: 12px; margin-top: .4rem;
+  box-shadow: 0 6px 16px rgba(0,0,0,.08);
+}
+.status-actions-row {
+  display: flex; gap: .5rem; margin-top: .6rem;
+}
+
+/* ===== Stories ===== */
+.stories-grid {
+  display: grid;
+  grid-template-columns: repeat( auto-fill, minmax(180px, 1fr) );
+  gap: .8rem;
+}
+.story-card {
+  background: #fff;
+  color: #0f172a;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: 0 12px 24px rgba(0,0,0,.06);
+  overflow: hidden;
+}
+.story-thumb { position: relative; }
+.story-thumb img, .story-thumb video {
+  width: 100%; height: 160px; object-fit: cover;
+  display: block;
+}
+.story-distance {
+  position: absolute; bottom: 8px; left: 8px;
+  background: rgba(14,165,233,.92); color: #fff; font-weight: 800;
+  padding: 4px 8px; border-radius: 999px; font-size: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.2);
+}
+.story-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .6rem .7rem .2rem;
+  font-size: 14px;
+}
+.story-time { font-size: 12px; color: #64748b; }
+.story-actions {
+  display: flex; gap: .5rem; padding: 0 .7rem .7rem;
+}
+/* Fullscreen Status Area */
+.status-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 850; /* מעל המפה */
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  background: rgba(255,255,255,.96);
+  color: #0f172a;
+  overflow: hidden;
+}
+
+/* Tabs bar */
+.status-tabs {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255,255,255,.9);
+  border-bottom: 1px solid #e2e8f0;
+}
+.status-tabs button {
+  background: #eef2ff;
+  color: #0f172a;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+}
+.status-tabs button.active {
+  background: linear-gradient(135deg,#3b82f6,#2563eb);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(37,99,235,.25);
+}
+.status-tabs button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Scrollable content area */
+.status-tab-content {
+  overflow: auto;
+}
+.status-form-new {
+  display: grid;
+  gap: 10px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.status-form-new input,
+.status-form-new textarea {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 15px;
+  background: #f9fafb;
+  color: #0f172a;
+  resize: none;
+}
+
+.status-form-new textarea {
+  min-height: 60px;
+  max-height: 120px;
+}
+
+.status-form-new input:focus,
+.status-form-new textarea:focus {
+  border-color: #60a5fa;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+.status-form-new button {
+  width: fit-content;
+  padding: 10px 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.status-form-new button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.4);
+}
+
+.status-form-new button:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.feed-list {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.status-card {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  color: #0f172a;
+}
+
+.status-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 6px;
+}
+
+.avatar-mini {
+  background: #2563eb;
+  color: white;
+  font-weight: 700;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.who-when {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-text {
+  font-size: 0.95rem;
+  margin: 6px 0;
+}
+
+.status-actions-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.map-cta {
+  background: #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+}
+
+
+/* Reuse existing feed styles you already have:
+   .status-form-new, .status-list-wrapper, .feed-list, .status-card,
+   .status-head, .avatar-mini, .who-when, .meta-line,
+   .status-text, .status-actions-row, .map-cta ... */
+
+/* נווט/טאבים עליונים בתוך ה-StatusArea כבר קיימים אצלך:
+   .status-actions, .status-list-wrapper
+   ונעשה בהם שימוש פה לתאימות מלאה. */
+
+/* =========================
+   ChatWindow (kept, polished lightly)
+   ========================= */
+
+/* ==== ChatWindow – Updated Styling ==== */
+
+/* =========================
+   Utilities
+   ========================= */
+
+.hidden { display: none !important; }
+.center { display: grid; place-items: center; }
+
+.timestamp { font-size: .75rem; color: #6b7280; margin-top: 4px; display: block; }
+
+/* =========================
+   Responsive
+   ========================= */
+
+@media (max-width: 900px) {
+  .topbar-wrap { width: min(96vw, 860px); }
+}
+
+@media (max-width: 620px) {
+  .left-actions { top: 8px; left: 8px; }
+  .pill-tabs, .nav-tabs { width: 92vw; }
+  .searchbar { grid-template-columns: 1fr; width: 92vw; }
+  .status-area { inset-inline: 8px; bottom: 8px; }
+  .autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 0 0 10px 10px;
+  border: 1px solid #ccc;
+  border-top: none;
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  direction: rtl;
+}
+
+.autocomplete-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.autocomplete-option:hover {
+  background-color: #f0f0f0;
+}
+.story-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.2rem;
+  padding: 1rem;
+}
+
+.story-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.story-media img,
+.story-media video {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.story-meta {
+  padding: 0.6rem 0.8rem;
+  font-size: 14px;
+  color: #475569;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.story-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0.8rem 1rem;
+  justify-content: space-between;
+}
+
+.story-actions button {
+  background: #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+}
+
+}
