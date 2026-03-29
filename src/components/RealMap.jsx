@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -7,6 +7,7 @@ import {
   Circle,
   useMap,
 } from "react-leaflet";
+import { MessageCircle, Search, X, Send } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -45,12 +46,14 @@ function haversineMeters(a, b) {
 function formatDistance(distanceM) {
   if (distanceM == null) return "לא ידוע";
   if (distanceM < 1000) return `${Math.round(distanceM)} מטר`;
-  return `${(distanceM / 1000).toFixed(2)} ק"מ`;
+  return `${(distanceM / 1000).toFixed(2)} ק״מ`;
 }
 
 export default function RealMap({
   statuses = [],
+  comments = [],
   onOpenChat,
+  onOpenStatus,
   userLocation,
   radius = 1500,
 }) {
@@ -58,7 +61,6 @@ export default function RealMap({
   const [center, setCenter] = useState(defaultCenter);
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [nearby, setNearby] = useState([]);
-  const popupRef = useRef(null);
 
   const pulseIcon = useMemo(
     () =>
@@ -75,7 +77,7 @@ export default function RealMap({
     () =>
       L.divIcon({
         className: "person-marker",
-        html: `<div class="person-dot">👤</div>`,
+        html: `<div class="person-dot"></div>`,
         iconSize: [24, 24],
         iconAnchor: [12, 12],
       }),
@@ -103,6 +105,31 @@ export default function RealMap({
         typeof s.location.lng === "number"
     );
   }, [statuses]);
+
+  const commentsMetaByStatus = useMemo(() => {
+    const map = {};
+
+    for (const comment of comments) {
+      if (!map[comment.statusId]) {
+        map[comment.statusId] = {
+          count: 0,
+          latest: null,
+        };
+      }
+
+      map[comment.statusId].count += 1;
+
+      if (
+        !map[comment.statusId].latest ||
+        new Date(comment.timestamp) >
+          new Date(map[comment.statusId].latest.timestamp)
+      ) {
+        map[comment.statusId].latest = comment;
+      }
+    }
+
+    return map;
+  }, [comments]);
 
   const handleFindPeople = useCallback(() => {
     if (!selectedPoint) return;
@@ -134,11 +161,11 @@ export default function RealMap({
   const displayedStatuses = nearby.length > 0 ? nearby : validStatuses;
 
   return (
-    <div style={{ height: "100vh", position: "relative" }}>
+    <div className="realmap-shell">
       <MapContainer
         center={center}
         zoom={13}
-        style={{ height: "100%", width: "100%" }}
+        className="realmap-container"
         scrollWheelZoom={true}
       >
         <FlyTo center={center} zoom={14} />
@@ -150,28 +177,23 @@ export default function RealMap({
 
         {selectedPoint && (
           <>
-            <Marker
-              position={selectedPoint}
-              icon={pulseIcon}
-              eventHandlers={{
-                click: () => popupRef.current?.openOn?.(popupRef.current._map),
-              }}
-            >
-              <Popup ref={popupRef}>
-                <div style={{ display: "grid", gap: 8 }}>
-                  <strong>📍 מיקום נבחר</strong>
+            <Marker position={selectedPoint} icon={pulseIcon}>
+              <Popup>
+                <div className="map-popup-card">
+                  <strong className="map-popup-title">מיקום נבחר</strong>
 
-                  <span style={{ fontSize: 12 }}>
+                  <span className="map-popup-coords">
                     lat {selectedPoint.lat.toFixed(5)}, lng{" "}
                     {selectedPoint.lng.toFixed(5)}
                   </span>
 
-                  <div style={{ fontSize: 13 }}>
+                  <div className="map-popup-meta">
                     רדיוס פעיל: {radius.toLocaleString()} מטר
                   </div>
 
                   <button className="map-cta" onClick={handleFindPeople}>
-                    🔍 חפש אנשים קרובים
+                    <Search size={15} strokeWidth={2.3} />
+                    <span>חפש אנשים קרובים</span>
                   </button>
                 </div>
               </Popup>
@@ -188,51 +210,83 @@ export default function RealMap({
           </>
         )}
 
-        {displayedStatuses.map((status) => (
-          <Marker
-            key={status.id || `${status.nickname}-${status.timestamp}`}
-            position={[status.location.lat, status.location.lng]}
-            icon={personIcon}
-          >
-            <Popup>
-              <div style={{ display: "grid", gap: 6 }}>
-                <strong>{status.nickname || "משתמש"}</strong>
+        {displayedStatuses.map((status) => {
+          const commentMeta = commentsMetaByStatus[status.id] || {
+            count: 0,
+            latest: null,
+          };
 
-                <div>{status.text || "—"}</div>
+          return (
+            <Marker
+              key={status.id || `${status.nickname}-${status.timestamp}`}
+              position={[status.location.lat, status.location.lng]}
+              icon={personIcon}
+            >
+              <Popup>
+                <div className="map-popup-card">
+                  <strong className="map-popup-title">
+                    {status.nickname || "משתמש"}
+                  </strong>
 
-                {status._distanceM != null && (
-                  <div style={{ fontSize: 12 }}>
-                    מרחק: {formatDistance(status._distanceM)}
+                  <div className="map-popup-text">{status.text || "—"}</div>
+
+                  {status._distanceM != null && (
+                    <div className="map-popup-meta">
+                      מרחק: {formatDistance(status._distanceM)}
+                    </div>
+                  )}
+
+                  <div className="map-popup-comment-chip">
+                    <MessageCircle size={14} strokeWidth={2.2} />
+                    <span>{commentMeta.count} תגובות</span>
                   </div>
-                )}
 
-                <button
-                  className="map-cta"
-                  onClick={() =>
-                    onOpenChat?.(status.nickname || "משתמש")
-                  }
-                >
-                  💬 צ׳אט
-                </button>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+                  {commentMeta.latest && (
+                    <div className="map-popup-last-comment">
+                      <strong>{commentMeta.latest.nickname}:</strong>
+                      <span>{commentMeta.latest.text}</span>
+                    </div>
+                  )}
+
+                  <div className="map-popup-actions">
+                    <button
+                      className="map-cta"
+                      onClick={() => onOpenStatus?.(status)}
+                    >
+                      <Send size={15} strokeWidth={2.3} />
+                      <span>הגב</span>
+                    </button>
+
+                    <button
+                      className="map-cta secondary"
+                      onClick={() => onOpenChat?.(status.nickname || "משתמש")}
+                    >
+                      <MessageCircle size={15} strokeWidth={2.3} />
+                      <span>צ׳אט</span>
+                    </button>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
 
       <div className="map-fab-panel">
         {selectedPoint ? (
           <>
             <button className="map-fab" onClick={handleFindPeople}>
-              🔍 חפש אנשים
+              <Search size={16} strokeWidth={2.2} />
+              <span>חפש אנשים</span>
             </button>
 
             <button className="map-fab" onClick={clearSelection}>
-              ❌ נקה
+              <X size={16} strokeWidth={2.2} />
+              <span>נקה</span>
             </button>
           </>
         ) : (
-          <div className="map-hint">בחר מיקום בחיפוש למעלה…</div>
+          <div className="map-hint">בחר מיקום בחיפוש למעלה</div>
         )}
       </div>
     </div>

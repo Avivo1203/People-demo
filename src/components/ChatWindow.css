@@ -70,21 +70,42 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+  align-items: center;
 }
 
-.chat-header-actions button {
+.chat-toggle-btn,
+.chat-close-btn {
   border: none;
   background: rgba(255, 255, 255, 0.16);
   color: white;
   border-radius: 12px;
-  padding: 8px 10px;
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 700;
   transition: 0.2s ease;
 }
 
-.chat-header-actions button:hover {
+.chat-toggle-btn {
+  padding: 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-toggle-btn.active {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.chat-close-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-toggle-btn:hover,
+.chat-close-btn:hover {
   background: rgba(255, 255, 255, 0.24);
 }
 
@@ -93,7 +114,7 @@
   padding: 16px;
   overflow-y: auto;
   background:
-    radial-gradient(circle at top right, rgba(96, 165, 250, 0.10), transparent 28%),
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.1), transparent 28%),
     radial-gradient(circle at bottom left, rgba(147, 197, 253, 0.12), transparent 25%),
     #f8fbff;
   display: flex;
@@ -167,7 +188,9 @@
   text-decoration: none;
   color: inherit;
   font-weight: 700;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.18);
   padding: 8px 10px;
   border-radius: 10px;
@@ -181,18 +204,21 @@
 .meta {
   margin-top: 8px;
   font-size: 0.7rem;
-  opacity: 0.78;
+  opacity: 0.84;
   display: flex;
   justify-content: space-between;
   gap: 8px;
+  align-items: center;
 }
 
 .timestamp {
   direction: ltr;
 }
 
-.tick {
-  font-weight: 700;
+.tick-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .chat-empty {
@@ -220,13 +246,16 @@
 }
 
 .composer-tools button {
-  font-size: 1.2rem;
   background: #f8fbff;
   border: 1px solid rgba(203, 213, 225, 0.8);
   cursor: pointer;
   padding: 8px;
   border-radius: 12px;
   transition: 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #26456f;
 }
 
 .composer-tools button:hover {
@@ -256,7 +285,6 @@
 .composer-send {
   background: linear-gradient(135deg, #1d4ed8, #3399ff);
   color: white;
-  font-size: 1.1rem;
   width: 46px;
   height: 46px;
   border: none;
@@ -265,6 +293,9 @@
   font-weight: bold;
   transition: 0.2s ease;
   box-shadow: 0 10px 20px rgba(29, 78, 216, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .composer-send:hover:not(:disabled) {
@@ -477,4 +508,6 @@
   .panel.attach-panel {
     bottom: 190px;
   }
+
+
 }

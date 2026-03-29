@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import RealMap from "./components/RealMap";
 import ChatWindow from "./components/ChatWindow";
 import StatusArea from "./components/StatusArea";
+import StatusDetails from "./components/StatusDetails";
 import WelcomePage from "./WelcomePage";
 import TopBar from "./components/TopBar";
 import ProfileCard from "./components/ProfileCard";
@@ -13,12 +14,35 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [comments, setComments] = useState(() => {
+    const saved = localStorage.getItem("comments");
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 1,
+            statusId: 1001,
+            nickname: "טל",
+            text: "אני זורם, איפה בדיוק?",
+            timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+          },
+          {
+            id: 2,
+            statusId: 1002,
+            nickname: "דניס",
+            text: "יש לי מצית, אני קרוב.",
+            timestamp: new Date(Date.now() - 1000 * 60 * 11).toISOString(),
+          },
+        ];
+  });
+
   const [chatUser, setChatUser] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [entered, setEntered] = useState(
     () => localStorage.getItem("entered") === "true"
   );
+  const [selectedStatus, setSelectedStatus] = useState(null);
 
   const [activeTab, setActiveTab] = useState("map");
   const [showTopBar, setShowTopBar] = useState(true);
@@ -49,6 +73,10 @@ export default function App() {
   }, [statuses]);
 
   useEffect(() => {
+    localStorage.setItem("comments", JSON.stringify(comments));
+  }, [comments]);
+
+  useEffect(() => {
     localStorage.setItem("currentUser", JSON.stringify(currentUser));
   }, [currentUser]);
 
@@ -65,7 +93,7 @@ export default function App() {
         {
           id: 1002,
           nickname: "טל",
-          text: "יש למישהו גחלים או מצית? אנחנו בפארק 😅",
+          text: "יש למישהו גחלים או מצית? אנחנו בפארק",
           timestamp: new Date(Date.now() - 1000 * 60 * 17).toISOString(),
           location: { lat: 32.082, lng: 34.779 },
         },
@@ -80,18 +108,20 @@ export default function App() {
 
       setStatuses(starterStatuses);
     }
-  }, []);
+  }, [statuses.length]);
 
   const filteredStatuses = statuses
-    .filter((s) => {
-      const age = Date.now() - new Date(s.timestamp).getTime();
+    .filter((status) => {
+      const age = Date.now() - new Date(status.timestamp).getTime();
 
       return (
         age < 24 * 60 * 60 * 1000 &&
-        (
-          ((s.nickname || "").toLowerCase().includes(searchTerm.toLowerCase())) ||
-          ((s.text || "").toLowerCase().includes(searchTerm.toLowerCase()))
-        )
+        (((status.nickname || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())) ||
+          ((status.text || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())))
       );
     })
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -100,12 +130,34 @@ export default function App() {
     setStatuses((prev) => [newStatus, ...prev]);
   };
 
+  const addComment = (statusId, text) => {
+    if (!text.trim()) return;
+
+    const newComment = {
+      id: Date.now(),
+      statusId,
+      nickname: currentUser?.nickname || currentUser?.fullName || "אני",
+      text: text.trim(),
+      timestamp: new Date().toISOString(),
+    };
+
+    setComments((prev) => [newComment, ...prev]);
+  };
+
   const openChat = (nickname) => {
     setChatUser(nickname);
   };
 
   const closeChat = () => {
     setChatUser(null);
+  };
+
+  const openStatusDetails = (status) => {
+    setSelectedStatus(status);
+  };
+
+  const closeStatusDetails = () => {
+    setSelectedStatus(null);
   };
 
   const clearStatuses = () => {
@@ -200,37 +252,49 @@ export default function App() {
       )}
 
       {activeTab === "map" && (
-        <RealMap
-          key={mapCenterKey}
-          statuses={filteredStatuses}
-          userLocation={userLocation}
-          onOpenChat={openChat}
-          radius={radius}
-        />
+    <RealMap
+  key={mapCenterKey}
+  comments={comments}
+  statuses={filteredStatuses}
+  userLocation={userLocation}
+  onOpenChat={openChat}
+  onOpenStatus={openStatusDetails}
+  radius={radius}
+/>
       )}
 
-      {activeTab === "status" && (
-        <StatusArea
-          statuses={filteredStatuses}
-          userLocation={userLocation}
-          onAddStatus={addStatus}
-          onOpenChat={openChat}
-          onJumpToMap={jumpToMapFromStatus}
-          onShowTopBar={() => setShowTopBar(true)}
-          isTopBarVisible={showTopBar}
-          radius={radius}
-          onOpenProfile={(status) => {
-            setCurrentUser((prev) => ({
-              ...prev,
-              fullName: status.nickname || prev.fullName,
-              nickname: status.nickname || prev.nickname,
-              bio: status.text || prev.bio,
-            }));
-            setIsProfileOpen(true);
-          }}
-        />
-      )}
+    {activeTab === "status" && (
+<StatusArea
+  statuses={filteredStatuses}
+  comments={comments}
+  userLocation={userLocation}
+  onAddStatus={addStatus}
+  onOpenChat={openChat}
+  onOpenStatus={openStatusDetails}
+  onJumpToMap={jumpToMapFromStatus}
+  radius={radius}
+  onOpenProfile={(status) => {
+    setCurrentUser((prev) => ({
+      ...prev,
+      fullName: status.nickname || prev.fullName,
+      nickname: status.nickname || prev.nickname,
+      bio: status.text || prev.bio,
+    }));
+    setIsProfileOpen(true);
+  }}
+/>
+)}
 
+{selectedStatus && (
+  <StatusDetails
+    status={selectedStatus}
+    comments={comments.filter(
+      (comment) => comment.statusId === selectedStatus.id
+    )}
+    onAddComment={addComment}
+    onClose={closeStatusDetails}
+  />
+)}
       {chatUser && (
         <div
           style={{

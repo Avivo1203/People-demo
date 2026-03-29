@@ -1,11 +1,15 @@
 import React, { useMemo } from "react";
+import {
+  X,
+  BadgeCheck,
+  MapPin,
+  MessageCircle,
+  Satellite,
+  Pencil,
+} from "lucide-react";
 import "./ProfileCard.css";
 
-export default function ProfileCard({
-  user,
-  onClose,
-  onEdit,
-}) {
+export default function ProfileCard({ user, onClose, onEdit }) {
   const safeUser = user || {};
 
   const initials = useMemo(() => {
@@ -23,9 +27,7 @@ export default function ProfileCard({
     safeUser.nickname?.trim() ||
     "משתמש אנונימי";
 
-  const username =
-    safeUser.nickname?.trim() ||
-    "people_user";
+  const username = safeUser.nickname?.trim() || "people_user";
 
   const bio =
     safeUser.bio?.trim() ||
@@ -58,7 +60,7 @@ export default function ProfileCard({
             aria-label="סגור פרופיל"
             title="סגור"
           >
-            ✕
+            <X size={18} strokeWidth={2.5} />
           </button>
 
           <div className="profile-card-cover">
@@ -76,7 +78,9 @@ export default function ProfileCard({
           <div className="profile-card-main">
             <div className="profile-card-name-row">
               <h2>{displayName}</h2>
-              <span className="profile-card-verified">✨</span>
+              <span className="profile-card-verified" title="פרופיל פעיל">
+                <BadgeCheck size={18} strokeWidth={2.3} />
+              </span>
             </div>
 
             <div className="profile-card-username">@{username}</div>
@@ -84,9 +88,20 @@ export default function ProfileCard({
             <p className="profile-card-bio">{bio}</p>
 
             <div className="profile-card-tags">
-              <span className="profile-tag">📍 {locationLabel}</span>
-              <span className="profile-tag">💬 פעיל באזור</span>
-              <span className="profile-tag">🛰️ People Local</span>
+              <span className="profile-tag">
+                <MapPin size={14} strokeWidth={2.2} />
+                <span>{locationLabel}</span>
+              </span>
+
+              <span className="profile-tag">
+                <MessageCircle size={14} strokeWidth={2.2} />
+                <span>פעיל באזור</span>
+              </span>
+
+              <span className="profile-tag">
+                <Satellite size={14} strokeWidth={2.2} />
+                <span>People Local</span>
+              </span>
             </div>
           </div>
         </div>
@@ -140,7 +155,8 @@ export default function ProfileCard({
             className="profile-primary-btn"
             onClick={onEdit}
           >
-            ✏️ ערוך פרופיל
+            <Pencil size={16} strokeWidth={2.2} />
+            <span>ערוך פרופיל</span>
           </button>
 
           <button

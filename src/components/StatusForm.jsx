@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { ImagePlus, X, Send } from "lucide-react";
 
 /**
  * props:
@@ -6,20 +7,35 @@ import React, { useCallback, useMemo, useState } from "react";
  * - userLocation: { latitude, longitude } | null
  */
 export default function StatusForm({ onAddStatus, userLocation }) {
-  const [nickname, setNickname] = useState(
-    () => localStorage.getItem("nickname") || ""
-  );
   const [text, setText] = useState("");
-  const [mediaUrl, setMediaUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
 
-  const trimmedNickname = nickname.trim();
+  const fileInputRef = useRef(null);
+
+  const currentUser = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("currentUser");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const displayNickname = useMemo(() => {
+    return (
+      currentUser?.nickname?.trim() ||
+      currentUser?.fullName?.trim() ||
+      "אנונימי"
+    );
+  }, [currentUser]);
+
   const trimmedText = text.trim();
-  const trimmedMediaUrl = mediaUrl.trim();
 
   const canSubmit = useMemo(() => {
-    return trimmedNickname.length > 0 && trimmedText.length > 0;
-  }, [trimmedNickname, trimmedText]);
+    return trimmedText.length > 0;
+  }, [trimmedText]);
 
   const resolveLocation = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -59,10 +75,48 @@ export default function StatusForm({ onAddStatus, userLocation }) {
     });
   }, [userLocation]);
 
+  const fileToDataUrl = useCallback((file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
+  const handlePickImage = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("אפשר להעלות כרגע רק תמונה.");
+      return;
+    }
+
+    try {
+      const preview = await fileToDataUrl(file);
+      setImageFile(file);
+      setImagePreview(preview);
+    } catch {
+      alert("לא הצלחנו לקרוא את התמונה.");
+    }
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = useCallback(
     async (e) => {
       e?.preventDefault?.();
-
       if (!canSubmit || loading) return;
 
       setLoading(true);
@@ -73,27 +127,25 @@ export default function StatusForm({ onAddStatus, userLocation }) {
 
         const newStatus = {
           id: Date.now(),
-          nickname: trimmedNickname,
+          nickname: displayNickname,
           text: trimmedText,
           timestamp: nowIso,
           location: loc,
-          ...(trimmedMediaUrl
+          ...(imagePreview
             ? {
                 media: {
-                  url: trimmedMediaUrl,
-                  type: /\.(mp4|webm|ogg)$/i.test(trimmedMediaUrl)
-                    ? "video"
-                    : "image",
+                  url: imagePreview,
+                  type: "image",
+                  name: imageFile?.name || "status-image",
                 },
               }
             : {}),
         };
 
         onAddStatus?.(newStatus);
-        localStorage.setItem("nickname", trimmedNickname);
 
         setText("");
-        setMediaUrl("");
+        clearImage();
       } catch {
         alert("לא הצלחנו לקבל מיקום כרגע. אשר גישה למיקום ונסה שוב.");
       } finally {
@@ -103,11 +155,12 @@ export default function StatusForm({ onAddStatus, userLocation }) {
     [
       canSubmit,
       loading,
-      onAddStatus,
       resolveLocation,
-      trimmedMediaUrl,
-      trimmedNickname,
+      displayNickname,
       trimmedText,
+      imagePreview,
+      imageFile,
+      onAddStatus,
     ]
   );
 
@@ -119,38 +172,18 @@ export default function StatusForm({ onAddStatus, userLocation }) {
   };
 
   return (
-    <form className="status-form-pro" onSubmit={handleSubmit}>
-      <div className="status-form-grid">
-        <div className="status-form-field">
-          <label>כינוי</label>
-          <input
-            type="text"
-            placeholder="הכינוי שלך"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            disabled={loading}
-            aria-label="כינוי"
-          />
-        </div>
-
-        <div className="status-form-field">
-          <label>מדיה לסטורי (לא חובה)</label>
-          <input
-            type="url"
-            placeholder="קישור לתמונה או וידאו"
-            value={mediaUrl}
-            onChange={(e) => setMediaUrl(e.target.value)}
-            disabled={loading}
-            aria-label="קישור למדיה"
-          />
-        </div>
+    <form className="status-form-pro status-form-simple" onSubmit={handleSubmit}>
+      <div className="status-form-userline">
+        <span className="status-form-userchip">
+          מפרסם כ: <strong>{displayNickname}</strong>
+        </span>
       </div>
 
       <div className="status-form-field">
         <label>סטטוס</label>
         <textarea
           rows={4}
-          placeholder="מה קורה סביבך עכשיו?"
+          placeholder="מה קורה באזור שלך עכשיו?"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -159,9 +192,47 @@ export default function StatusForm({ onAddStatus, userLocation }) {
         />
       </div>
 
+      <div className="status-form-media-row">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          hidden
+        />
+
+        <button
+          type="button"
+          className="status-media-btn"
+          onClick={handlePickImage}
+          disabled={loading}
+        >
+          <ImagePlus size={18} strokeWidth={2.3} />
+          <span>העלה תמונה</span>
+        </button>
+
+        {imagePreview && (
+          <div className="status-image-preview-wrap">
+            <img
+              src={imagePreview}
+              alt="preview"
+              className="status-image-preview"
+            />
+            <button
+              type="button"
+              className="status-image-remove"
+              onClick={clearImage}
+              title="הסר תמונה"
+            >
+              <X size={15} strokeWidth={2.5} />
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="status-form-footer">
         <div className="status-form-note">
-          הסטטוס יישמר עם המיקום שלך, ואם תוסיף מדיה הוא יופיע גם בסטורי.
+          הסטטוס יפורסם עם המיקום שלך, ואם תעלה תמונה היא תצורף לפוסט.
         </div>
 
         <button
@@ -169,7 +240,8 @@ export default function StatusForm({ onAddStatus, userLocation }) {
           className="status-form-submit"
           disabled={loading || !canSubmit}
         >
-          {loading ? "שולח..." : "📨 פרסם סטטוס"}
+          <Send size={16} strokeWidth={2.4} />
+          <span>{loading ? "שולח..." : "פרסם סטטוס"}</span>
         </button>
       </div>
     </form>

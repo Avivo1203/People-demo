@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { User, House, MapPinned, LoaderCircle, Trash2 } from "lucide-react";
 import NavTabs from "./NavTabs";
 import SearchBar from "./SearchBar";
 
@@ -19,75 +20,9 @@ export default function TopBar({
 }) {
   const [isLocating, setIsLocating] = useState(false);
 
-  const wrapStyle = {
-    position: "absolute",
-    top: "16px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: "min(1180px, calc(100% - 24px))",
-    zIndex: 500,
-    direction: "rtl",
-  };
-
-  const cardStyle = {
-    display: "flex",
-    flexDirection: "column",
-    gap: "14px",
-  };
-
-  const rowStyle = {
-    display: "grid",
-    gridTemplateColumns: "1fr auto",
-    gap: "12px",
-    alignItems: "center",
-  };
-
-  const actionsStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    background: "rgba(255,255,255,0.72)",
-    backdropFilter: "blur(18px)",
-    WebkitBackdropFilter: "blur(18px)",
-    border: "1px solid rgba(255,255,255,0.55)",
-    borderRadius: "22px",
-    padding: "10px",
-    boxShadow: "0 10px 28px rgba(15,23,42,0.10)",
-  };
-
-  const btnStyle = {
-    width: "48px",
-    height: "48px",
-    border: "none",
-    borderRadius: "16px",
-    background:
-      "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(241,245,249,0.88))",
-    boxShadow: "0 8px 18px rgba(15,23,42,0.10)",
-    fontSize: "20px",
-    cursor: "pointer",
-    transition: "0.2s ease",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  };
-
-  const disabledBtnStyle = {
-    ...btnStyle,
-    opacity: 0.65,
-    cursor: "not-allowed",
-  };
-
-  const profileBtnStyle = {
-    ...btnStyle,
-    background:
-      "linear-gradient(135deg, rgba(219,234,254,0.95), rgba(239,246,255,0.92))",
-    color: "#1d4ed8",
-    fontWeight: 900,
-  };
-
   const handleLocation = () => {
     if (!navigator.geolocation) {
-      alert("⚠️ הדפדפן שלך לא תומך במיקום גיאוגרפי.");
+      alert("הדפדפן שלך לא תומך במיקום גיאוגרפי.");
       return;
     }
 
@@ -102,7 +37,7 @@ export default function TopBar({
         setIsLocating(false);
       },
       () => {
-        alert("⚠️ לא הצלחנו לקבל את המיקום. אנא אפשר/י גישה.");
+        alert("לא הצלחנו לקבל את המיקום. אנא אפשר/י גישה.");
         setIsLocating(false);
       },
       {
@@ -113,9 +48,11 @@ export default function TopBar({
     );
   };
 
+  const isStatusTab = activeTab === "status";
+
   return (
-    <div style={wrapStyle}>
-      <div style={cardStyle}>
+    <div className={`topbar-shell ${isStatusTab ? "topbar-shell-status" : "topbar-shell-map"}`}>
+      <div className="topbar-stack">
         <NavTabs
           activeTab={activeTab}
           onChangeTab={setActiveTab}
@@ -124,7 +61,7 @@ export default function TopBar({
           onHideTopBar={onHideTopBar}
         />
 
-        <div style={rowStyle}>
+        <div className="topbar-row">
           <SearchBar
             searchTerm={searchTerm}
             onSearchChange={onSearchChange}
@@ -132,23 +69,23 @@ export default function TopBar({
             onPlaceSelect={onPlaceSelect}
           />
 
-          <div style={actionsStyle}>
+          <div className="topbar-actions">
             <button
               type="button"
               onClick={onOpenProfile}
               title="פרופיל"
-              style={profileBtnStyle}
+              className="topbar-action-btn profile"
             >
-              👤
+              <User size={19} strokeWidth={2.3} />
             </button>
 
             <button
               type="button"
               onClick={onGoHome}
               title="דף הבית"
-              style={btnStyle}
+              className="topbar-action-btn"
             >
-              🏠
+              <House size={19} strokeWidth={2.3} />
             </button>
 
             <button
@@ -156,18 +93,22 @@ export default function TopBar({
               onClick={handleLocation}
               disabled={isLocating}
               title={isLocating ? "מאתר מיקום..." : "מיקום נוכחי"}
-              style={isLocating ? disabledBtnStyle : btnStyle}
+              className={`topbar-action-btn ${isLocating ? "disabled" : ""}`}
             >
-              {isLocating ? "⌛" : "📍"}
+              {isLocating ? (
+                <LoaderCircle size={19} strokeWidth={2.3} className="spin" />
+              ) : (
+                <MapPinned size={19} strokeWidth={2.3} />
+              )}
             </button>
 
             <button
               type="button"
               onClick={onClear}
               title="נקה הכל"
-              style={btnStyle}
+              className="topbar-action-btn"
             >
-              🧹
+              <Trash2 size={19} strokeWidth={2.3} />
             </button>
           </div>
         </div>

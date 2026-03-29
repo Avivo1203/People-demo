@@ -310,4 +310,22 @@
   .profile-card-actions {
     flex-direction: column;
   }
+  .profile-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-card-verified {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
 }

@@ -1,7 +1,24 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
+import {
+  Languages,
+  X,
+  Smile,
+  Paperclip,
+  Camera,
+  Send,
+  CheckCheck,
+  FolderUp,
+} from "lucide-react";
 import "./ChatWindow.css";
 
 const TTL_MS = 24 * 60 * 60 * 1000;
+
 const EMOJIS = [
   "😀", "😅", "😍", "😎", "🙌", "🤝", "🔥", "👍", "💙",
   "✨", "🎯", "🗺️", "📍", "🆘", "🙏", "🎉", "🍀", "✅", "⭐"
@@ -38,7 +55,8 @@ function AttachmentPreview({ att }) {
 
   return (
     <a className="att att-file" href={att.url} download={att.name || "file"}>
-      📄 {att.name || "קובץ"}
+      <FolderUp size={16} strokeWidth={2.2} />
+      <span>{att.name || "קובץ"}</span>
     </a>
   );
 }
@@ -58,8 +76,8 @@ export default function ChatWindow({ selectedUser, onClose }) {
 
       const parsed = JSON.parse(raw);
       const now = Date.now();
-
       const cleaned = {};
+
       for (const peer in parsed) {
         cleaned[peer] = (parsed[peer] || []).filter(
           (m) => now - (m.createdAt || m.timestamp || 0) < TTL_MS
@@ -206,7 +224,7 @@ export default function ChatWindow({ selectedUser, onClose }) {
     const dataUrl = canvas.toDataURL("image/png");
 
     sendMessage({
-      text: "(תמונה)",
+      text: "",
       attachments: [
         {
           type: "image",
@@ -285,16 +303,30 @@ export default function ChatWindow({ selectedUser, onClose }) {
         </div>
 
         <div className="chat-header-actions">
-          <button onClick={() => setTranslateOn((v) => !v)}>
-            {translateOn ? "תרגום: פעיל" : "תרגום: כבוי"}
+          <button
+            type="button"
+            className={`chat-toggle-btn ${translateOn ? "active" : ""}`}
+            onClick={() => setTranslateOn((v) => !v)}
+            title="הפעלת תרגום"
+          >
+            <Languages size={16} strokeWidth={2.2} />
+            <span>{translateOn ? "תרגום ON" : "תרגום OFF"}</span>
           </button>
-          <button onClick={onClose}>סגור ✕</button>
+
+          <button
+            type="button"
+            className="chat-close-btn"
+            onClick={onClose}
+            title="סגור"
+          >
+            <X size={17} strokeWidth={2.5} />
+          </button>
         </div>
       </div>
 
       <div className="chat-messages" ref={scrollerRef}>
         {messages.length === 0 && (
-          <div className="chat-empty">התחילו שיחה 👋</div>
+          <div className="chat-empty">התחילו שיחה</div>
         )}
 
         {messages.map((message) => (
@@ -324,7 +356,10 @@ export default function ChatWindow({ selectedUser, onClose }) {
                     minute: "2-digit",
                   })}
                 </span>
-                <span className="tick">✓✓</span>
+
+                <span className="tick-wrap">
+                  <CheckCheck size={14} strokeWidth={2.4} />
+                </span>
               </div>
             </div>
           </div>
@@ -334,13 +369,15 @@ export default function ChatWindow({ selectedUser, onClose }) {
       <div className="composer">
         <div className="composer-tools">
           <button type="button" title="אמוג'י" onClick={toggleEmojiPanel}>
-            😊
+            <Smile size={18} strokeWidth={2.2} />
           </button>
+
           <button type="button" title="צרף קבצים" onClick={toggleAttachPanel}>
-            📎
+            <Paperclip size={18} strokeWidth={2.2} />
           </button>
+
           <button type="button" title="מצלמה" onClick={startCamera}>
-            📷
+            <Camera size={18} strokeWidth={2.2} />
           </button>
         </div>
 
@@ -358,8 +395,9 @@ export default function ChatWindow({ selectedUser, onClose }) {
           className="composer-send"
           onClick={() => sendMessage()}
           disabled={!input.trim()}
+          title="שלח"
         >
-          ➤
+          <Send size={18} strokeWidth={2.4} />
         </button>
       </div>
 
@@ -387,37 +425,42 @@ export default function ChatWindow({ selectedUser, onClose }) {
             style={{ display: "none" }}
             onChange={onFilesSelected}
           />
+
           <button type="button" onClick={onPickFiles}>
-            בחר קבצים…
+            בחר קבצים
           </button>
+
           <div className="hint">
-            ניתן לצרף תמונות או מסמכים; יישמרו כ-dataURL ל-MVP
+            ניתן לצרף תמונות או מסמכים, והם יישמרו מקומית ב־MVP.
           </div>
         </div>
       )}
 
       <div className="deeds-bar">
         <span>סמן מעשה טוב:</span>
+
         <button
           type="button"
           onClick={() => markDeed("green")}
           className="deed deed-green"
         >
-          ✅ ירוק ({deeds.green})
+          ירוק ({deeds.green})
         </button>
+
         <button
           type="button"
           onClick={() => markDeed("yellow")}
           className="deed deed-yellow"
         >
-          ⭐ צהוב ({deeds.yellow})
+          צהוב ({deeds.yellow})
         </button>
+
         <button
           type="button"
           onClick={() => markDeed("blue")}
           className="deed deed-blue"
         >
-          💙 כחול ({deeds.blue})
+          כחול ({deeds.blue})
         </button>
       </div>
 
@@ -434,7 +477,7 @@ export default function ChatWindow({ selectedUser, onClose }) {
 
             <div className="camera-actions">
               <button type="button" onClick={capturePhoto}>
-                צלם ושלח 📸
+                צלם ושלח
               </button>
               <button type="button" onClick={stopCamera}>
                 סגור

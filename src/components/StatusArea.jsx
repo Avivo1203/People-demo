@@ -6,23 +6,23 @@ import StoryGrid from "./StoryGrid";
 /**
  * props:
  * - statuses: Array
+ * - comments: Array
  * - userLocation: { latitude, longitude } | null
  * - onAddStatus: (newStatus) => void
  * - onOpenChat: (nickname) => void
+ * - onOpenStatus?: (status) => void
  * - onJumpToMap: ({lat, lng}) => void
- * - onShowTopBar: () => void
- * - isTopBarVisible: boolean
  * - radius?: number
  * - onOpenProfile?: (status) => void
  */
 export default function StatusArea({
   statuses = [],
+  comments = [],
   userLocation,
   onAddStatus,
   onOpenChat,
+  onOpenStatus,
   onJumpToMap,
-  onShowTopBar,
-  isTopBarVisible,
   radius = 1500,
   onOpenProfile,
 }) {
@@ -86,25 +86,13 @@ export default function StatusArea({
           </div>
         </div>
 
-        {!isTopBarVisible && (
-          <div className="status-topbar-return">
-            <button
-              type="button"
-              className="status-return-btn"
-              onClick={onShowTopBar}
-            >
-              ⬆️ הצג שוב את הסרגל העליון
-            </button>
-          </div>
-        )}
-
         <div className="status-tabs">
           <button
             type="button"
             className={activeTab === "feed" ? "active" : ""}
             onClick={() => setActiveTab("feed")}
           >
-            📰 פיד
+            פיד
           </button>
 
           <button
@@ -112,7 +100,7 @@ export default function StatusArea({
             className={activeTab === "story" ? "active" : ""}
             onClick={() => setActiveTab("story")}
           >
-            📸 סטורי
+            סטורי
           </button>
 
           <button
@@ -120,7 +108,7 @@ export default function StatusArea({
             className={activeTab === "good" ? "active" : ""}
             onClick={() => setActiveTab("good")}
           >
-            💙 מעשים טובים
+            מעשים טובים
           </button>
         </div>
 
@@ -139,10 +127,12 @@ export default function StatusArea({
           {activeTab === "feed" && (
             <StatusFeed
               statuses={statuses}
+              comments={comments}
               userLocation={userLocation}
               onOpenChat={onOpenChat}
               onJumpToMap={onJumpToMap}
               onOpenProfile={onOpenProfile}
+              onOpenStatus={onOpenStatus}
             />
           )}
 
