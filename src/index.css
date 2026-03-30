@@ -135,11 +135,9 @@ button[aria-pressed="true"] {
    ========================= */
 
 .app-container {
-  position: relative;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-y: auto;
 }
-
 .status-page-screen {
   height: 100vh;
   overflow: hidden;

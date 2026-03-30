@@ -16,7 +16,7 @@ export default function SearchBar({
         fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
             searchTerm
-          )}`
+          )}&limit=5&countrycodes=il` // הגבלה לישראל לדיוק מירבי
         )
           .then((res) => res.json())
           .then((data) => {
@@ -38,10 +38,19 @@ export default function SearchBar({
   }, [searchTerm]);
 
   const handleSelect = (place) => {
+    // עדכון הטקסט בשדה לכתובת שנבחרה
     onSearchChange(place.display_name);
     setSuggestions([]);
     setShowDropdown(false);
-    onPlaceSelect?.(place);
+
+    // שליחת המיקום ל-App.jsx עם המרה למספרים
+    if (onPlaceSelect) {
+      onPlaceSelect({
+        lat: parseFloat(place.lat),
+        lon: parseFloat(place.lon),
+        display_name: place.display_name
+      });
+    }
   };
 
   return (

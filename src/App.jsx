@@ -1,320 +1,142 @@
-import React, { useEffect, useState } from "react";
-import RealMap from "./components/RealMap";
-import ChatWindow from "./components/ChatWindow";
-import StatusArea from "./components/StatusArea";
-import StatusDetails from "./components/StatusDetails";
-import WelcomePage from "./WelcomePage";
-import TopBar from "./components/TopBar";
-import ProfileCard from "./components/ProfileCard";
-import "./index.css";
+import React, { useState, useEffect, useMemo } from 'react';
+import RealMap from './components/RealMap';
+import WelcomePage from './WelcomePage';
+import TopBar from './components/TopBar';
+import StatusArea from './components/StatusArea';
+import StatusDetails from './components/StatusDetails';
+import ChatWindow from './components/ChatWindow';
+import './index.css';
 
-export default function App() {
-  const [statuses, setStatuses] = useState(() => {
-    const saved = localStorage.getItem("statuses");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [comments, setComments] = useState(() => {
-    const saved = localStorage.getItem("comments");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          {
-            id: 1,
-            statusId: 1001,
-            nickname: "טל",
-            text: "אני זורם, איפה בדיוק?",
-            timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-          },
-          {
-            id: 2,
-            statusId: 1002,
-            nickname: "דניס",
-            text: "יש לי מצית, אני קרוב.",
-            timestamp: new Date(Date.now() - 1000 * 60 * 11).toISOString(),
-          },
-        ];
-  });
-
-  const [chatUser, setChatUser] = useState(null);
+function App() {
+  const [entered, setEntered] = useState(false);
+  const [currentUser, setCurrentUser] = useState({ nickname: '', avatar: '👤' });
   const [userLocation, setUserLocation] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [entered, setEntered] = useState(
-    () => localStorage.getItem("entered") === "true"
-  );
+  const [statuses, setStatuses] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState(null);
+  const [activeChat, setActiveChat] = useState(null);
+  const [mapCenterKey, setMapCenterKey] = useState(0);
 
+  // States לחיבור הממשק - רדיוס מוגדר במטרים לפי NavTabs
+  const [radius, setRadius] = useState(1500); 
+  const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("map");
-  const [showTopBar, setShowTopBar] = useState(true);
-  const [radius, setRadius] = useState(1500);
 
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-  const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem("currentUser");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          fullName: "Aviv Oshri",
-          nickname: "aviv",
-          bio: "בונה את People – אפליקציה לחיבור בין אנשים לפי מיקום, פיד, סטטוסים וצ׳אט.",
-          city: "נתניה",
-          mood: "פתוח להכיר ולעזור",
-          vibe: "חברתי / יוזם",
-          goodDeeds: 7,
-          statusCount: 12,
-          storyCount: 4,
-          avatarUrl: "",
-        };
-  });
-
-  useEffect(() => {
-    localStorage.setItem("statuses", JSON.stringify(statuses));
-  }, [statuses]);
-
-  useEffect(() => {
-    localStorage.setItem("comments", JSON.stringify(comments));
-  }, [comments]);
-
-  useEffect(() => {
-    localStorage.setItem("currentUser", JSON.stringify(currentUser));
-  }, [currentUser]);
-
-  useEffect(() => {
-    if (statuses.length === 0) {
-      const starterStatuses = [
-        {
-          id: 1001,
-          nickname: "דניס",
-          text: "מישהו זורם לכדורגל באזור?",
-          timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-          location: { lat: 32.0853, lng: 34.7818 },
-        },
-        {
-          id: 1002,
-          nickname: "טל",
-          text: "יש למישהו גחלים או מצית? אנחנו בפארק",
-          timestamp: new Date(Date.now() - 1000 * 60 * 17).toISOString(),
-          location: { lat: 32.082, lng: 34.779 },
-        },
-        {
-          id: 1003,
-          nickname: "אביב",
-          text: "מי באזור ורוצה לקפוץ לקפה?",
-          timestamp: new Date(Date.now() - 1000 * 60 * 33).toISOString(),
-          location: { lat: 32.0795, lng: 34.7862 },
-        },
-      ];
-
-      setStatuses(starterStatuses);
-    }
-  }, [statuses.length]);
-
-  const filteredStatuses = statuses
-    .filter((status) => {
-      const age = Date.now() - new Date(status.timestamp).getTime();
-
-      return (
-        age < 24 * 60 * 60 * 1000 &&
-        (((status.nickname || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())) ||
-          ((status.text || "")
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase())))
-      );
-    })
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-  const addStatus = (newStatus) => {
-    setStatuses((prev) => [newStatus, ...prev]);
-  };
-
-  const addComment = (statusId, text) => {
-    if (!text.trim()) return;
-
-    const newComment = {
-      id: Date.now(),
-      statusId,
-      nickname: currentUser?.nickname || currentUser?.fullName || "אני",
-      text: text.trim(),
-      timestamp: new Date().toISOString(),
-    };
-
-    setComments((prev) => [newComment, ...prev]);
-  };
-
-  const openChat = (nickname) => {
-    setChatUser(nickname);
-  };
-
-  const closeChat = () => {
-    setChatUser(null);
-  };
-
-  const openStatusDetails = (status) => {
-    setSelectedStatus(status);
-  };
-
-  const closeStatusDetails = () => {
-    setSelectedStatus(null);
-  };
-
-  const clearStatuses = () => {
-    setStatuses([]);
-    localStorage.removeItem("statuses");
-  };
-
-  const updateUserLocation = (coords) => {
-    setUserLocation(coords);
-  };
-
-  const enterApp = () => {
-    localStorage.setItem("entered", "true");
-    setEntered(true);
-  };
-
-  const goHome = () => {
-    localStorage.clear();
-    window.location.reload();
-  };
-
-  const jumpToMapFromStatus = (loc) => {
-    if (!loc) return;
-
-    setActiveTab("map");
-    setUserLocation({
-      latitude: loc.lat,
-      longitude: loc.lng,
-    });
-    setShowTopBar(true);
+  const syncWithServer = async (lat, lng, statusUpdate = null) => {
+    try {
+      const response = await fetch('http://localhost:3001/api/user/location', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname: currentUser.nickname || 'אורח', lat, lng, ...statusUpdate }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.allUsers) {
+          setStatuses(data.allUsers.map(u => ({
+            ...u,
+            lat: u.location?.coordinates[1],
+            lng: u.location?.coordinates[0]
+          })));
+        }
+      }
+    } catch (e) { console.error("Sync error:", e); }
   };
 
   const handlePlaceSelect = (place) => {
-    const lat = parseFloat(place.lat);
-    const lon = parseFloat(place.lon);
-
-    setUserLocation({
-      latitude: lat,
-      longitude: lon,
-    });
-
-    setActiveTab("map");
-    setShowTopBar(true);
+    // Nominatim מחזיר lon, אנחנו צריכים להמיר ל-lng
+    const newLoc = { lat: parseFloat(place.lat), lng: parseFloat(place.lon) };
+    setUserLocation(newLoc);
+    setMapCenterKey(prev => prev + 1); 
   };
 
-  const mapCenterKey = userLocation
-    ? `${Number(userLocation.latitude).toFixed(5)},${Number(
-        userLocation.longitude
-      ).toFixed(5)}`
-    : "default";
+  useEffect(() => {
+    if (!entered) return;
+    navigator.geolocation.getCurrentPosition((p) => {
+      const loc = { lat: p.coords.latitude, lng: p.coords.longitude };
+      setUserLocation(loc);
+      syncWithServer(loc.lat, loc.lng);
+    }, (err) => console.error("Geo error:", err), { enableHighAccuracy: true });
+  }, [entered]);
 
-  if (!entered) {
-    return <WelcomePage onEnter={enterApp} />;
-  }
+  const filteredStatuses = useMemo(() => {
+    if (!userLocation) return [];
+    return statuses.filter(s => {
+      if (!s.lat || !s.lng) return false;
+      const R = 6371; // רדיוס כדור הארץ בק"מ
+      const dLat = (s.lat - userLocation.lat) * Math.PI / 180;
+      const dLon = (s.lng - userLocation.lng) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + 
+                Math.cos(userLocation.lat * Math.PI / 180) * Math.cos(s.lat * Math.PI / 180) * Math.sin(dLon/2)**2;
+      const distanceInKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      
+      // המרה לק"מ כי הרדיוס שלנו הוא במטרים (למשל 1500מ' = 1.5ק"מ)
+      return distanceInKm <= (radius / 1000);
+    });
+  }, [statuses, userLocation, radius]);
+
+  if (!entered) return <WelcomePage onEnter={(u) => { setCurrentUser(u); setEntered(true); }} />;
 
   return (
-    <div
-      className="app-container"
-      dir="rtl"
-      style={{
-        height: "100vh",
-        overflow: "hidden",
-        position: "relative",
-      }}
-    >
-      {showTopBar && (
-        <TopBar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          radius={radius}
-          setRadius={setRadius}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onOpenChat={(nick) => setChatUser(nick)}
-          onGoHome={goHome}
-          onClear={clearStatuses}
-          onGetLocation={updateUserLocation}
-          onPlaceSelect={handlePlaceSelect}
-          onHideTopBar={() => setShowTopBar(false)}
-          onOpenProfile={() => setIsProfileOpen(true)}
-        />
-      )}
-
-      {isProfileOpen && (
-        <ProfileCard
-          user={currentUser}
-          onClose={() => setIsProfileOpen(false)}
-          onEdit={() => {
-            alert("שלב הבא: Profile Panel / Edit Profile");
-          }}
-        />
-      )}
-
-      {activeTab === "map" && (
-    <RealMap
-  key={mapCenterKey}
-  comments={comments}
-  statuses={filteredStatuses}
-  userLocation={userLocation}
-  onOpenChat={openChat}
-  onOpenStatus={openStatusDetails}
+    <div className="app-container">
+      <TopBar 
+  // נתונים (States)
+  currentUser={currentUser}
+  activeTab={activeTab}
+  searchTerm={searchTerm}
   radius={radius}
-/>
-      )}
-
-    {activeTab === "status" && (
-<StatusArea
-  statuses={filteredStatuses}
-  comments={comments}
-  userLocation={userLocation}
-  onAddStatus={addStatus}
-  onOpenChat={openChat}
-  onOpenStatus={openStatusDetails}
-  onJumpToMap={jumpToMapFromStatus}
-  radius={radius}
-  onOpenProfile={(status) => {
-    setCurrentUser((prev) => ({
-      ...prev,
-      fullName: status.nickname || prev.fullName,
-      nickname: status.nickname || prev.nickname,
-      bio: status.text || prev.bio,
-    }));
-    setIsProfileOpen(true);
+  
+  // פונקציות (שיניתי את השמות שיתאימו ב-100% ל-TopBar.jsx שלך)
+  onChangeTab={setActiveTab}
+  onSearchChange={setSearchTerm}
+  setRadius={setRadius} // ב-TopBar שלך זה נקרא setRadius
+  onPlaceSelect={handlePlaceSelect}
+  
+  // פעולות כפתורים
+  onGoHome={() => { 
+    setSearchTerm(""); 
+    setActiveTab("map"); 
+    setMapCenterKey(k => k + 1); 
   }}
+  onClear={() => {
+    setSearchTerm("");
+    // אם יש פונקציה שמנקה תוצאות חיפוש במפה, תוסיף אותה כאן
+  }}
+  onGetLocation={(l) => { 
+    setUserLocation({ lat: l.latitude, lng: l.longitude }); 
+    setMapCenterKey(k => k + 1); 
+  }}
+  
+  // הוספת פונקציות חסרות כדי למנוע קריסה
+  onOpenProfile={() => console.log("Profile clicked")}
+  onOpenChat={() => console.log("Chat clicked")}
 />
-)}
+      
+      <main className="main-content">
+        {activeTab === "map" ? (
+          <RealMap 
+            key={mapCenterKey}
+            statuses={filteredStatuses}
+            userLocation={userLocation}
+            onOpenChat={setActiveChat}
+            onOpenStatus={setSelectedStatus}
+            radius={radius}
+          />
+        ) : (
+          <div className="list-view-placeholder" style={{ padding: '20px' }}>
+             {/* כאן תבוא רשימת הסטטוסים במידה ויש */}
+          </div>
+        )}
+        
+        <StatusArea 
+          onPostStatus={(s) => syncWithServer(userLocation.lat, userLocation.lng, s)} 
+          radius={radius} 
+          setRadius={setRadius} 
+        />
+      </main>
 
-{selectedStatus && (
-  <StatusDetails
-    status={selectedStatus}
-    comments={comments.filter(
-      (comment) => comment.statusId === selectedStatus.id
-    )}
-    onAddComment={addComment}
-    onClose={closeStatusDetails}
-  />
-)}
-      {chatUser && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "60px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 999,
-            width: "100%",
-            maxWidth: "460px",
-            maxHeight: "75vh",
-            background: "#fff",
-            borderRadius: "16px",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
-            overflow: "hidden",
-          }}
-        >
-          <ChatWindow selectedUser={chatUser} onClose={closeChat} />
-        </div>
-      )}
+      {selectedStatus && <StatusDetails status={selectedStatus} onClose={() => setSelectedStatus(null)} onOpenChat={setActiveChat} />}
+      {activeChat && <ChatWindow chat={activeChat} onClose={() => setActiveChat(null)} />}
     </div>
   );
 }
+
+export default App;

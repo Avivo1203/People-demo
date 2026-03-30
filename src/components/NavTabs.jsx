@@ -1,10 +1,5 @@
 import React, { useMemo } from "react";
-import {
-  Map,
-  MessageSquareText,
-  Radius,
-  X,
-} from "lucide-react";
+import { Map, MessageSquareText, Radius, X } from "lucide-react";
 
 export default function NavTabs({
   activeTab,
@@ -28,11 +23,7 @@ export default function NavTabs({
           <div className="navtabs-glow navtabs-glow-blue" />
           <div className="navtabs-glow navtabs-glow-purple" />
 
-          <div
-            className="navtabs-inner"
-            role="tablist"
-            aria-label="Main sections"
-          >
+          <div className="navtabs-inner" role="tablist" aria-label="Main sections">
             <span
               className={`navtabs-indicator ${isMap ? "map-active" : "status-active"}`}
               aria-hidden="true"
@@ -47,11 +38,8 @@ export default function NavTabs({
             >
               <div className="navtab-text">
                 <span className="navtab-title">Map</span>
-                <span className="navtab-subtitle">
-                  מפה חיה, מיקומים ואנשים סביבך
-                </span>
+                <span className="navtab-subtitle">מפה חיה, מיקומים ואנשים סביבך</span>
               </div>
-
               <div className={`navtab-icon ${isMap ? "active" : ""} map-mode`}>
                 <Map size={22} strokeWidth={2.2} />
               </div>
@@ -66,11 +54,8 @@ export default function NavTabs({
             >
               <div className="navtab-text">
                 <span className="navtab-title">Status Area</span>
-                <span className="navtab-subtitle">
-                  פיד אזורי, סטטוסים, סטורי וצ׳אט
-                </span>
+                <span className="navtab-subtitle">פיד אזורי, סטטוסים, סטורי וצ׳אט</span>
               </div>
-
               <div className={`navtab-icon ${!isMap ? "active" : ""} status-mode`}>
                 <MessageSquareText size={22} strokeWidth={2.2} />
               </div>
@@ -87,15 +72,11 @@ export default function NavTabs({
               <div className="radius-icon">
                 <Radius size={18} strokeWidth={2.2} />
               </div>
-
               <div>
                 <div className="radius-title">רדיוס חיפוש חכם</div>
-                <div className="radius-subtitle">
-                  בחר כמה רחוק להציג אנשים, סטטוסים ותוכן
-                </div>
+                <div className="radius-subtitle">בחר כמה רחוק להציג אנשים, סטטוסים ותוכן</div>
               </div>
             </div>
-
             <div className="radius-value">{radiusLabel}</div>
           </div>
 
@@ -125,8 +106,6 @@ export default function NavTabs({
           <button
             type="button"
             onClick={onHideTopBar}
-            title="הסתר סרגל"
-            aria-label="הסתר סרגל עליון"
             className="navtabs-hide-btn"
           >
             <X size={17} strokeWidth={2.6} />
