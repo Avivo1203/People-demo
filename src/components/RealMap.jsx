@@ -1,78 +1,49 @@
-import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from 'react-leaflet';
+import React from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// פונקציה למרכוז המפה
-function ChangeView({ center }) {
-  const map = useMap();
-  useEffect(() => {
-    if (center && center.lat && center.lng) {
-      map.flyTo([center.lat, center.lng], map.getZoom(), { duration: 1.5 });
-    }
-  }, [center, map]);
-  return null;
-}
+// תיקון לאייקונים של Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
-export default function RealMap({ userLocation, statuses, onOpenChat, onOpenStatus, radius }) {
-  const defaultCenter = [32.0853, 34.7818];
-  const hasLocation = userLocation && userLocation.lat && userLocation.lng;
-  const center = hasLocation ? [userLocation.lat, userLocation.lng] : defaultCenter;
+export default function RealMap({ statuses = [], userLocation, onOpenChat, onOpenStatus, radius }) {
+  if (!userLocation) return <div className="map-loading">מאתר מיקום...</div>;
 
   return (
-    <div className="map-wrapper" style={{ height: '100%', width: '100%' }}>
+    <div className="map-wrapper">
       <MapContainer 
-        center={center} 
+        center={[userLocation.lat, userLocation.lng]} 
         zoom={14} 
         style={{ height: '100%', width: '100%' }}
       >
-        <ChangeView center={userLocation} />
-
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        
+        {/* מיקום המשתמש */}
+        <Circle 
+          center={[userLocation.lat, userLocation.lng]} 
+          radius={radius} 
+          pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.1 }} 
         />
+        <Marker position={[userLocation.lat, userLocation.lng]}>
+          <Popup>אתה כאן</Popup>
+        </Marker>
 
-        {hasLocation && (
-          <>
-            {/* הנקודה הכחולה המדויקת של המשתמש */}
-            <Circle
-              center={[userLocation.lat, userLocation.lng]}
-              radius={15} // רדיוס קטן במטרים לנקודת המרכז
-              pathOptions={{
-                fillColor: '#2563eb',
-                fillOpacity: 1,
-                color: 'white',
-                weight: 2
-              }}
-            />
-
-            {/* עיגול הרדיוס המשתנה - זה מה שחיפשת */}
-            <Circle
-              center={[userLocation.lat, userLocation.lng]}
-              radius={radius} // כאן אנחנו משתמשים ברדיוס מה-Props (במטרים!)
-              pathOptions={{
-                fillColor: '#2563eb',
-                fillOpacity: 0.15, // שקוף עדין
-                color: '#2563eb',
-                weight: 1,
-                dashArray: '5, 10' // קו מקווקו למראה "חיפוש"
-              }}
-            />
-          </>
-        )}
-
-        {statuses.map((status) => (
+        {/* סטטוסים מסביב */}
+        {(statuses || []).map((status) => (
           <Marker 
-            key={status._id || status.id} 
+            key={status._id || Math.random()} 
             position={[status.lat, status.lng]}
-            eventHandlers={{ click: () => onOpenStatus(status) }}
           >
             <Popup>
-              <div className="status-popup">
+              <div className="map-popup">
                 <strong>{status.nickname}</strong>
-                <p>{status.text}</p>
-                <button onClick={() => onOpenChat(status)}>צ'אט</button>
+                <p>{status.text || status.status}</p>
+                <button onClick={() => onOpenChat(status)}>שלח הודעה</button>
               </div>
             </Popup>
           </Marker>

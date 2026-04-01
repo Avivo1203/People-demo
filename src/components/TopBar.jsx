@@ -1,36 +1,80 @@
-import React, { useState } from "react";
-import { User, House, MapPinned, LoaderCircle, Trash2 } from "lucide-react";
-import NavTabs from "./NavTabs";
-import SearchBar from "./SearchBar";
+import React from 'react';
 
-export default function TopBar({
-  activeTab, onChangeTab, radius, setRadius, searchTerm, onSearchChange,
-  onGoHome, onClear, onGetLocation, onPlaceSelect, onOpenProfile, onOpenChat
-}) {
-  const [isLocating, setIsLocating] = useState(false);
-
-  const handleLocation = () => {
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition((pos) => {
-      onGetLocation?.({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      setIsLocating(false);
-    }, () => setIsLocating(false), { enableHighAccuracy: true });
-  };
-
+export default function TopBar({ activeTab, onChangeTab, radius, setRadius }) {
   return (
-    <div className={`topbar-shell ${activeTab === "status" ? "topbar-shell-status" : "topbar-shell-map"}`}>
+    <div className="topbar-shell">
       <div className="topbar-stack">
-        <NavTabs activeTab={activeTab} onChangeTab={onChangeTab} radius={radius} onRadiusChange={setRadius} />
-        <div className="topbar-row">
-          <SearchBar searchTerm={searchTerm} onSearchChange={onSearchChange} onPlaceSelect={onPlaceSelect} onOpenChat={onOpenChat} />
-          <div className="topbar-actions">
-            <button onClick={onOpenProfile} className="topbar-action-btn profile"><User size={19} /></button>
-            <button onClick={onGoHome} className="topbar-action-btn"><House size={19} /></button>
-            <button onClick={handleLocation} disabled={isLocating} className="topbar-action-btn">
-              {isLocating ? <LoaderCircle size={19} className="spin" /> : <MapPinned size={19} />}
-            </button>
-            <button onClick={onClear} className="topbar-action-btn"><Trash2 size={19} /></button>
+        
+        {/* שורת החיפוש המעוצבת */}
+        <div className="searchbar-input-wrap">
+          <div className="searchbar-icon">🔍</div>
+          <input 
+            type="text" 
+            className="searchbar-input" 
+            placeholder="חפש מיקום, אנשים או קהילות..." 
+          />
+          <button className="searchbar-clear-btn">✕</button>
+        </div>
+
+        {/* שורת הטאבים והרדיוס - מחולקת ל-2 עמודות לפי ה-CSS שלך */}
+        <div className="navtabs-wrapper">
+          
+          {/* כרטיסיית הניווט (מפה/סטטוסים) */}
+          <div className="navtabs-card">
+            <div className="navtabs-inner">
+              <div className={`navtabs-indicator ${activeTab === 'map' ? 'map-active' : 'status-active'}`} />
+              
+              <button 
+                className={`navtab-btn ${activeTab === 'map' ? 'active' : ''}`}
+                onClick={() => onChangeTab('map')}
+              >
+                <div className="navtab-text">
+                  <span className="navtab-title">מפה</span>
+                  <span className="navtab-subtitle">תצוגה חזותית</span>
+                </div>
+                <div className={`navtab-icon map-mode ${activeTab === 'map' ? 'active' : ''}`}>🗺️</div>
+              </button>
+
+              <button 
+                className={`navtab-btn ${activeTab === 'statuses' ? 'active' : ''}`}
+                onClick={() => onChangeTab('statuses')}
+              >
+                <div className="navtab-text">
+                  <span className="navtab-title">סטטוסים</span>
+                  <span className="navtab-subtitle">מה קורה עכשיו</span>
+                </div>
+                <div className={`navtab-icon status-mode ${activeTab === 'statuses' ? 'active' : ''}`}>💬</div>
+              </button>
+            </div>
           </div>
+
+          {/* כרטיסיית הרדיוס המעוצבת */}
+          <div className="radius-card">
+            <div className="radius-top">
+              <div className="radius-title-wrap">
+                <div className="radius-icon">🎯</div>
+                <div>
+                  <div className="radius-title">רדיוס חיפוש</div>
+                  <div className="radius-subtitle">מרחק מהמיקום שלך</div>
+                </div>
+              </div>
+              <div className="radius-value">{radius} מ'</div>
+            </div>
+            
+            <div className="radius-slider-wrap">
+              <div className="radius-slider-glow"></div>
+              <input 
+                type="range" 
+                className="radius-slider"
+                min="100" 
+                max="2000" 
+                step="100"
+                value={radius}
+                onChange={(e) => setRadius(e.target.value)}
+              />
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

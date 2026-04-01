@@ -1,0 +1,62 @@
+.status-form-container {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 20px auto;
+    direction: rtl;
+}
+
+.user-name {
+    color: #1e293b; /* כחול-כהה עמוק */
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.user-name strong {
+    color: #2563eb; /* שם המשתמש בכחול בולט */
+}
+
+.status-form-input {
+    width: 100%;
+    min-height: 100px;
+    padding: 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #0f172a; /* טקסט שחור-כחול ברור */
+    resize: none;
+    margin-bottom: 15px;
+    transition: border-color 0.2s;
+}
+
+.status-form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.status-form-submit {
+    background: #3b82f6;
+    color: white;
+    padding: 10px 25px;
+    border-radius: 30px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    float: left;
+}
+
+.status-form-submit:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+.status-error {
+    color: #ef4444;
+    font-size: 0.85rem;
+    margin-top: 10px;
+    text-align: right;
+}
