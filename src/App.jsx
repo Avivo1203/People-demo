@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import RealMap from "./components/RealMap";
-import ChatWindow from "./components/ChatWindow";
 import StatusArea from "./components/StatusArea";
 import StatusDetails from "./components/StatusDetails";
 import WelcomePage from "./WelcomePage";
@@ -36,7 +35,6 @@ export default function App() {
         ];
   });
 
-  const [chatUser, setChatUser] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [entered, setEntered] = useState(
@@ -57,13 +55,12 @@ export default function App() {
       : {
           fullName: "Aviv Oshri",
           nickname: "aviv",
-          bio: "בונה את People – אפליקציה לחיבור בין אנשים לפי מיקום, פיד, סטטוסים וצ׳אט.",
+          bio: "בונה את People – אפליקציה לחיבור בין אנשים לפי מיקום, פיד וסטטוסים.",
           city: "נתניה",
           mood: "פתוח להכיר ולעזור",
           vibe: "חברתי / יוזם",
           goodDeeds: 7,
           statusCount: 12,
-          storyCount: 4,
           avatarUrl: "",
         };
   });
@@ -116,12 +113,12 @@ export default function App() {
 
       return (
         age < 24 * 60 * 60 * 1000 &&
-        (((status.nickname || "")
+        ((status.nickname || "")
           .toLowerCase()
-          .includes(searchTerm.toLowerCase())) ||
-          ((status.text || "")
+          .includes(searchTerm.toLowerCase()) ||
+          (status.text || "")
             .toLowerCase()
-            .includes(searchTerm.toLowerCase())))
+            .includes(searchTerm.toLowerCase()))
       );
     })
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -142,14 +139,6 @@ export default function App() {
     };
 
     setComments((prev) => [newComment, ...prev]);
-  };
-
-  const openChat = (nickname) => {
-    setChatUser(nickname);
-  };
-
-  const closeChat = () => {
-    setChatUser(null);
   };
 
   const openStatusDetails = (status) => {
@@ -231,7 +220,6 @@ export default function App() {
           setRadius={setRadius}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
-          onOpenChat={(nick) => setChatUser(nick)}
           onGoHome={goHome}
           onClear={clearStatuses}
           onGetLocation={updateUserLocation}
@@ -252,68 +240,46 @@ export default function App() {
       )}
 
       {activeTab === "map" && (
-    <RealMap
-  key={mapCenterKey}
-  comments={comments}
-  statuses={filteredStatuses}
-  userLocation={userLocation}
-  onOpenChat={openChat}
-  onOpenStatus={openStatusDetails}
-  radius={radius}
-/>
+        <RealMap
+          key={mapCenterKey}
+          comments={comments}
+          statuses={filteredStatuses}
+          userLocation={userLocation}
+          onOpenStatus={openStatusDetails}
+          radius={radius}
+        />
       )}
 
-    {activeTab === "status" && (
-<StatusArea
-  statuses={filteredStatuses}
-  comments={comments}
-  userLocation={userLocation}
-  onAddStatus={addStatus}
-  onOpenChat={openChat}
-  onOpenStatus={openStatusDetails}
-  onJumpToMap={jumpToMapFromStatus}
-  radius={radius}
-  onOpenProfile={(status) => {
-    setCurrentUser((prev) => ({
-      ...prev,
-      fullName: status.nickname || prev.fullName,
-      nickname: status.nickname || prev.nickname,
-      bio: status.text || prev.bio,
-    }));
-    setIsProfileOpen(true);
-  }}
-/>
-)}
-
-{selectedStatus && (
-  <StatusDetails
-    status={selectedStatus}
-    comments={comments.filter(
-      (comment) => comment.statusId === selectedStatus.id
-    )}
-    onAddComment={addComment}
-    onClose={closeStatusDetails}
-  />
-)}
-      {chatUser && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "60px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 999,
-            width: "100%",
-            maxWidth: "460px",
-            maxHeight: "75vh",
-            background: "#fff",
-            borderRadius: "16px",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
-            overflow: "hidden",
+      {activeTab === "status" && (
+        <StatusArea
+          statuses={filteredStatuses}
+          comments={comments}
+          userLocation={userLocation}
+          onAddStatus={addStatus}
+          onOpenStatus={openStatusDetails}
+          onJumpToMap={jumpToMapFromStatus}
+          radius={radius}
+          onOpenProfile={(status) => {
+            setCurrentUser((prev) => ({
+              ...prev,
+              fullName: status.nickname || prev.fullName,
+              nickname: status.nickname || prev.nickname,
+              bio: status.text || prev.bio,
+            }));
+            setIsProfileOpen(true);
           }}
-        >
-          <ChatWindow selectedUser={chatUser} onClose={closeChat} />
-        </div>
+        />
+      )}
+
+      {selectedStatus && (
+        <StatusDetails
+          status={selectedStatus}
+          comments={comments.filter(
+            (comment) => comment.statusId === selectedStatus.id
+          )}
+          onAddComment={addComment}
+          onClose={closeStatusDetails}
+        />
       )}
     </div>
   );

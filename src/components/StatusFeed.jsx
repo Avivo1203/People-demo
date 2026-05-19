@@ -45,7 +45,6 @@ export default function StatusFeed({
   statuses = [],
   comments = [],
   userLocation,
-  onOpenChat,
   onJumpToMap,
   onOpenProfile,
   onOpenStatus,
@@ -172,15 +171,7 @@ export default function StatusFeed({
                 <span>הגב</span>
               </button>
 
-              <button
-                type="button"
-                className="status-action-btn secondary"
-                onClick={() => onOpenChat?.(nickname)}
-                title="פתח צ'אט"
-              >
-                <MessageCircle size={16} strokeWidth={2.2} />
-                <span>צ'אט</span>
-              </button>
+            
 
               <button
                 type="button"

@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import StatusForm from "./StatusForm";
 import StatusFeed from "./StatusFeed";
-import StoryGrid from "./StoryGrid";
 
 /**
  * props:
@@ -95,21 +94,8 @@ export default function StatusArea({
             פיד
           </button>
 
-          <button
-            type="button"
-            className={activeTab === "story" ? "active" : ""}
-            onClick={() => setActiveTab("story")}
-          >
-            סטורי
-          </button>
+        
 
-          <button
-            type="button"
-            className={activeTab === "good" ? "active" : ""}
-            onClick={() => setActiveTab("good")}
-          >
-            מעשים טובים
-          </button>
         </div>
 
         <div className="status-composer-card">
@@ -136,15 +122,7 @@ export default function StatusArea({
             />
           )}
 
-          {activeTab === "story" && (
-            <StoryGrid
-              statuses={statuses}
-              userLocation={userLocation}
-              onOpenChat={onOpenChat}
-              onJumpToMap={onJumpToMap}
-            />
-          )}
-
+      
           {activeTab === "good" && (
             <div className="status-good-placeholder">
               <div className="status-good-icon">🤝</div>
