@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import "./WelcomePage.css";
 
+const API_URL = "http://localhost:5000/api/auth";
+
 export default function WelcomePage({ onEnter, onGuestEnter }) {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({
@@ -68,7 +70,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
     if (error) setError("");
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     const firstName = form.firstName.trim();
@@ -92,26 +94,40 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
       return;
     }
 
-    const user = {
-      nickname: firstName,
-      firstName,
-      lastName,
-      email,
-      phone,
-      password,
-      role: "user",
-      isGuest: false,
-    };
+    try {
+      const response = await fetch(`${API_URL}/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          phone,
+          password,
+        }),
+      });
 
-    localStorage.setItem("registeredUser", JSON.stringify(user));
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("entered", "true");
-    localStorage.setItem("guest", "false");
+      const data = await response.json();
 
-    onEnter();
+      if (!response.ok) {
+        setError(data.message || "שגיאה בהרשמה.");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("entered", "true");
+      localStorage.setItem("guest", "false");
+
+      onEnter();
+    } catch (err) {
+      setError("שגיאה בחיבור לשרת. בדוק שה־Backend פועל.");
+    }
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     const loginIdentifier = form.loginIdentifier.trim();
@@ -122,28 +138,34 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
       return;
     }
 
-    const savedUser = JSON.parse(localStorage.getItem("registeredUser"));
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          loginIdentifier,
+          password: loginPassword,
+        }),
+      });
 
-    if (!savedUser) {
-      setError("לא נמצא משתמש רשום. יש לבצע הרשמה קודם.");
-      return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "פרטי ההתחברות אינם נכונים.");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("entered", "true");
+      localStorage.setItem("guest", "false");
+
+      onEnter();
+    } catch (err) {
+      setError("שגיאה בחיבור לשרת. בדוק שה־Backend פועל.");
     }
-
-    const isIdentifierMatch =
-      savedUser.email === loginIdentifier || savedUser.phone === loginIdentifier;
-
-    const isPasswordMatch = savedUser.password === loginPassword;
-
-    if (!isIdentifierMatch || !isPasswordMatch) {
-      setError("פרטי ההתחברות אינם נכונים.");
-      return;
-    }
-
-    localStorage.setItem("user", JSON.stringify(savedUser));
-    localStorage.setItem("entered", "true");
-    localStorage.setItem("guest", "false");
-
-    onEnter();
   };
 
   return (
@@ -430,7 +452,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
             )}
 
             <div className="wp-trust">
-              הפרטים נשמרים כרגע מקומית לצורך הדגמה של המערכת.
+              הפרטים נשמרים בצורה מאובטחת במערכת.
             </div>
           </div>
         </section>
