@@ -4,6 +4,7 @@ import {
   MessageSquareText,
   Radius,
   X,
+  Search, // ייבוא אייקון חיפוש יפה לכפתור החדש
 } from "lucide-react";
 
 export default function NavTabs({
@@ -12,14 +13,33 @@ export default function NavTabs({
   onHideTopBar,
   radius = 1500,
   onRadiusChange,
+  userLocation,      // <-- פרופ חדש: מכיל את המיקום של המשתמש (אם קיים)
+  onSearchNearby,    // <-- פרופ חדש: הפונקציה שתפעיל את החיפוש
 }) {
   const isMap = activeTab === "map";
+
+  // בדיקה האם המשתמש כבר הפעיל מיקום
+  const hasLocation = !!userLocation;
 
   const radiusLabel = useMemo(() => {
     if (radius < 1000) return `${radius} מ׳`;
     const km = radius / 1000;
     return `${Number.isInteger(km) ? km : km.toFixed(1)} ק״מ`;
   }, [radius]);
+
+  // פונקציה שמטפלת בלחיצה על הכפתור החדש
+  const handleSearchClick = () => {
+    if (!hasLocation) return;
+    
+    // מכינים את ה-Flow והצינורות קדימה כפי שאביב ביקש
+    console.log("🚀 Radius Search Triggered:", {
+      radius: radius,
+      location: userLocation
+    });
+
+    // הפעלת הפונקציה שהתקבלה מאבא (App.jsx או TopBar)
+    onSearchNearby?.(radius, userLocation);
+  };
 
   return (
     <div className="navtabs-shell">
@@ -78,7 +98,8 @@ export default function NavTabs({
           </div>
         </div>
 
-        <div className="radius-card">
+        {/* הוספנו קלאס דינמי של radius-disabled במידה ואין מיקום */}
+        <div className={`radius-card ${!hasLocation ? "radius-disabled" : ""}`}>
           <div className="navtabs-glow navtabs-glow-blue" />
           <div className="navtabs-glow navtabs-glow-purple radius-glow-alt" />
 
@@ -107,6 +128,7 @@ export default function NavTabs({
               max="5000"
               step="100"
               value={radius}
+              disabled={!hasLocation} // <-- חוסם את הסליידר אם אין מיקום
               onChange={(e) => onRadiusChange?.(Number(e.target.value))}
               aria-label="בחירת רדיוס"
               className="radius-slider"
@@ -118,6 +140,19 @@ export default function NavTabs({
             <span>1 ק״מ</span>
             <span>2.5 ק״מ</span>
             <span>5 ק״מ</span>
+          </div>
+
+          {/* === הכפתור החדש: Radius Action === */}
+          <div className="radius-action-wrap">
+            <button
+              type="button"
+              disabled={!hasLocation} // <-- חוסם את הכפתור אם אין מיקום
+              onClick={handleSearchClick}
+              className="radius-search-btn"
+            >
+              <Search size={16} strokeWidth={2.4} />
+              <span>הצג באזור</span>
+            </button>
           </div>
         </div>
 

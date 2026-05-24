@@ -25,11 +25,15 @@ export default function TopBar({
   onPlaceSelect,
   onHideTopBar,
   onOpenProfile,
+  onSearchNearby, // <-- פרופ חדש: כדי שנוכל להעביר אותו הלאה לאבא הגדול (App.jsx)
 }) {
   const [isLocating, setIsLocating] = useState(false);
 
   // מצב שמראה אם המשתמש כבר הפעיל מיקום
   const [locationEnabled, setLocationEnabled] = useState(false);
+  
+  // <-- סטייט חדש: שומר את הקואורדינטות האמיתיות בשביל ה-Flow של הרדיוס
+  const [userLocation, setUserLocation] = useState(null); 
 
   const [user, setUser] = useState(null);
 
@@ -84,10 +88,16 @@ export default function TopBar({
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        onGetLocation?.({
+        const coords = {
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
-        });
+        };
+
+        // שולח למעלה לאבא אם צריך
+        onGetLocation?.(coords);
+
+        // <-- שומר מקומית את המיקום כדי להעביר ל-NavTabs
+        setUserLocation(coords);
 
         // מצב שהמיקום הופעל בהצלחה
         setLocationEnabled(true);
@@ -108,6 +118,11 @@ export default function TopBar({
     );
   };
 
+  // פונקציית תיווך שמקבלת את הלחיצה מ-NavTabs ומעבירה למעלה
+  const handleSearchNearby = (currentRadius, currentLoc) => {
+    onSearchNearby?.(currentRadius, currentLoc);
+  };
+
   const isStatusTab = activeTab === "status";
 
   return (
@@ -120,12 +135,15 @@ export default function TopBar({
     >
       <div className="topbar-stack">
 
+        {/* עדכנו את ה-Props של NavTabs כאן למטה */}
         <NavTabs
           activeTab={activeTab}
           onChangeTab={setActiveTab}
           radius={radius}
           onRadiusChange={setRadius}
           onHideTopBar={onHideTopBar}
+          userLocation={userLocation}       
+          onSearchNearby={handleSearchNearby}  
         />
 
         <div className="topbar-row">

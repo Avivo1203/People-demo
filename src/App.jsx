@@ -213,21 +213,29 @@ export default function App() {
       }}
     >
       {showTopBar && (
-        <TopBar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          radius={radius}
-          setRadius={setRadius}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onGoHome={goHome}
-          onClear={clearStatuses}
-          onGetLocation={updateUserLocation}
-          onPlaceSelect={handlePlaceSelect}
-          onHideTopBar={() => setShowTopBar(false)}
-          onOpenProfile={() => setIsProfileOpen(true)}
-        />
-      )}
+  <TopBar
+    activeTab={activeTab}
+    setActiveTab={setActiveTab}
+    radius={radius}
+    setRadius={setRadius}
+    searchTerm={searchTerm}
+    onSearchChange={setSearchTerm}
+    onGoHome={goHome}
+    onClear={clearStatuses}
+    onGetLocation={updateUserLocation}
+    onPlaceSelect={handlePlaceSelect}
+    onHideTopBar={() => setShowTopBar(false)}
+    onOpenProfile={() => setIsProfileOpen(true)}
+    // === החיבור החדש של ה-Radius Flow ===
+    onSearchNearby={(currentRadius, currentLoc) => {
+      console.log("🎯 App.jsx caught the Radius Search Flow!", {
+        radius: currentRadius,
+        location: currentLoc
+      });
+      // כאן בעתיד תוכלו להוסיף את הקריאה לשרת (fetch/axios) כדי להביא סטטוסים קרובים
+    }}
+  />
+)}
 
       {isProfileOpen && (
         <ProfileCard
