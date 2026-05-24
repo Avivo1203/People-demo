@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { User, House, MapPinned, LoaderCircle, Trash2, LogOut } from "lucide-react";
+import {
+  User,
+  House,
+  MapPinned,
+  LoaderCircle,
+  Trash2,
+  LogOut,
+} from "lucide-react";
+
 import NavTabs from "./NavTabs";
 import SearchBar from "./SearchBar";
 
@@ -20,11 +28,15 @@ export default function TopBar({
 }) {
   const [isLocating, setIsLocating] = useState(false);
 
+  // מצב שמראה אם המשתמש כבר הפעיל מיקום
+  const [locationEnabled, setLocationEnabled] = useState(false);
+
   const [user, setUser] = useState(null);
 
-  // בדיקה וטעינה של המשתמש מהדפדפן בזמן טעינת ה-TopBar
+  // טעינת המשתמש מה-localStorage
   React.useEffect(() => {
     const storedUser = localStorage.getItem("user");
+
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
@@ -34,31 +46,34 @@ export default function TopBar({
     }
   }, []);
 
-  // פונקציית עזר לקביעת השם המוצג לפי הדרישות של אביב
+  // שם משתמש דינמי
   const getUserDisplayName = () => {
     if (!user) return "";
+
     if (user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`;
     }
+
     return user.username || user.nickname || "משתמש מחובר";
   };
- const handleLogout = () => {
-    // 1. מחיקת כל הנתונים מהדפדפן
+
+  // Logout
+  const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("entered");
     localStorage.removeItem("guest");
-    
-    // 2. איפוס הסטייט המקומי
+
     setUser(null);
-    
-    // 3. חזרה בטוחה לעמוד הבית
+
     if (onGoHome) {
-      onGoHome(); // מריץ את הלוגיקה שאביב העביר לכם לפתיחת עמוד הבית
+      onGoHome();
     } else {
-      window.location.replace(window.location.origin); // גיבוי בטוח שמונע שגיאות אבטחה של כרום
+      window.location.replace(window.location.origin);
     }
   };
+
+  // הפעלת מיקום
   const handleLocation = () => {
     if (!navigator.geolocation) {
       alert("הדפדפן שלך לא תומך במיקום גיאוגרפי.");
@@ -73,12 +88,18 @@ export default function TopBar({
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
         });
+
+        // מצב שהמיקום הופעל בהצלחה
+        setLocationEnabled(true);
+
         setIsLocating(false);
       },
+
       () => {
         alert("לא הצלחנו לקבל את המיקום. אנא אפשר/י גישה.");
         setIsLocating(false);
       },
+
       {
         enableHighAccuracy: true,
         timeout: 10000,
@@ -90,8 +111,15 @@ export default function TopBar({
   const isStatusTab = activeTab === "status";
 
   return (
-    <div className={`topbar-shell ${isStatusTab ? "topbar-shell-status" : "topbar-shell-map"}`}>
+    <div
+      className={`topbar-shell ${
+        isStatusTab
+          ? "topbar-shell-status"
+          : "topbar-shell-map"
+      }`}
+    >
       <div className="topbar-stack">
+
         <NavTabs
           activeTab={activeTab}
           onChangeTab={setActiveTab}
@@ -101,6 +129,7 @@ export default function TopBar({
         />
 
         <div className="topbar-row">
+
           <SearchBar
             searchTerm={searchTerm}
             onSearchChange={onSearchChange}
@@ -109,7 +138,8 @@ export default function TopBar({
           />
 
           <div className="topbar-actions">
-            {/* 1. כפתור פרופיל - נשאר כמו שהוא */}
+
+            {/* פרופיל */}
             <button
               type="button"
               onClick={onOpenProfile}
@@ -119,15 +149,39 @@ export default function TopBar({
               <User size={19} strokeWidth={2.3} />
             </button>
 
-            {/* 2. כפתור דף הבית הופך לדינמי - התחלף בהתנאה של אביב */}
+            {/* משתמש מחובר / אורח */}
             {user ? (
-              /* מצב מחובר: מציג נקודה ירוקה, שם משתמש וכפתור התנתקות */
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", direction: "rtl" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", color: "#4a5568" }}>
-                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#48bb78" }}></span>
-                  <span>מחובר כ־{getUserDisplayName()}</span>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  direction: "rtl",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "14px",
+                    color: "#4a5568",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#48bb78",
+                    }}
+                  ></span>
+
+                  <span>
+                    מחובר כ־{getUserDisplayName()}
+                  </span>
                 </div>
-                
+
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -139,7 +193,6 @@ export default function TopBar({
                 </button>
               </div>
             ) : (
-              /* מצב אורח: מציג את כפתור דף הבית המקורי */
               <button
                 type="button"
                 onClick={onGoHome}
@@ -150,22 +203,39 @@ export default function TopBar({
               </button>
             )}
 
-            {/* 3. כפתור מיקום - נשאר כמו שהוא */}
+            {/* הפעל מיקום */}
             <button
               type="button"
               onClick={handleLocation}
               disabled={isLocating}
-              title={isLocating ? "מאתר מיקום..." : "מיקום נוכחי"}
-              className={`topbar-action-btn ${isLocating ? "disabled" : ""}`}
+              title={
+                isLocating
+                  ? "מפעיל מיקום..."
+                  : locationEnabled
+                  ? "מיקום פעיל"
+                  : "הפעל מיקום"
+              }
+              className={`topbar-action-btn ${
+                isLocating ? "disabled" : ""
+              } ${
+                locationEnabled ? "active-location" : ""
+              }`}
             >
               {isLocating ? (
-                <LoaderCircle size={19} strokeWidth={2.3} className="spin" />
+                <LoaderCircle
+                  size={19}
+                  strokeWidth={2.3}
+                  className="spin"
+                />
               ) : (
-                <MapPinned size={19} strokeWidth={2.3} />
+                <MapPinned
+                  size={19}
+                  strokeWidth={2.3}
+                />
               )}
             </button>
 
-            {/* 4. כפתור נקה הכל - נשאר כמו שהוא */}
+            {/* נקה הכל */}
             <button
               type="button"
               onClick={onClear}
@@ -174,6 +244,7 @@ export default function TopBar({
             >
               <Trash2 size={19} strokeWidth={2.3} />
             </button>
+
           </div>
         </div>
       </div>
