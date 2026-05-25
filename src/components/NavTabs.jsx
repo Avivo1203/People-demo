@@ -151,7 +151,7 @@ export default function NavTabs({
               className="radius-search-btn"
             >
               <Search size={16} strokeWidth={2.4} />
-              <span>הצג באזור</span>
+              <span>Explore Nearby People</span>
             </button>
           </div>
         </div>
