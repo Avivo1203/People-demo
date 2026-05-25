@@ -605,6 +605,9 @@ button[aria-pressed="true"] {
 /* =========================
    NavTabs
    ========================= */
+/* ============================= */
+/* NAV TABS + SMART RADIUS AREA  */
+/* ============================= */
 
 .navtabs-shell {
   width: min(1180px, calc(100% - 28px));
@@ -617,32 +620,35 @@ button[aria-pressed="true"] {
 .navtabs-wrapper {
   position: relative;
   display: grid;
-  grid-template-columns: 1.2fr 0.9fr;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  gap: 18px;
   align-items: stretch;
 }
+
+/* ===== Glass Cards ===== */
 
 .navtabs-card,
 .radius-card {
   position: relative;
   overflow: hidden;
-  border-radius: 32px;
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.74),
-    rgba(255, 255, 255, 0.5)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.14), transparent 36%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.56));
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   box-shadow:
-    0 14px 40px rgba(15, 23, 42, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    0 20px 55px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
+
+/* ===== Tabs Card ===== */
 
 .navtabs-card {
   padding: 10px;
-  min-height: 112px;
+  min-height: 116px;
 }
 
 .navtabs-inner {
@@ -650,7 +656,7 @@ button[aria-pressed="true"] {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  min-height: 92px;
+  min-height: 96px;
 }
 
 .navtabs-indicator {
@@ -658,25 +664,28 @@ button[aria-pressed="true"] {
   top: 0;
   bottom: 0;
   width: calc(50% - 5px);
-  border-radius: 24px;
-  transition: all 0.35s ease;
+  border-radius: 26px;
   z-index: 0;
+  transition:
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .navtabs-indicator.map-active {
+  transform: translateX(0);
   background: linear-gradient(135deg, #0f4fff 0%, #2d7dff 55%, #79b8ff 100%);
   box-shadow:
-    0 12px 30px rgba(37, 99, 235, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  transform: translateX(0);
+    0 16px 36px rgba(37, 99, 235, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
 }
 
 .navtabs-indicator.status-active {
+  transform: translateX(calc(100% + 10px));
   background: linear-gradient(135deg, #7c3aed 0%, #a855f7 55%, #c084fc 100%);
   box-shadow:
-    0 12px 30px rgba(124, 58, 237, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  transform: translateX(calc(100% + 10px));
+    0 16px 36px rgba(124, 58, 237, 0.31),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
 }
 
 .navtab-btn {
@@ -684,20 +693,28 @@ button[aria-pressed="true"] {
   z-index: 1;
   border: none;
   outline: none;
-  background: rgba(255, 255, 255, 0.18);
-  color: #10203a;
-  border-radius: 24px;
   cursor: pointer;
+  min-height: 96px;
   padding: 18px 20px;
+  border-radius: 26px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
   text-align: right;
-  min-height: 92px;
+  color: #10203a;
+  background: rgba(255, 255, 255, 0.22);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 4px 14px rgba(15, 23, 42, 0.05);
+    inset 0 1px 0 rgba(255, 255, 255, 0.48),
+    0 6px 16px rgba(15, 23, 42, 0.05);
+  transition:
+    transform 0.22s ease,
+    background 0.22s ease,
+    color 0.22s ease;
+}
+
+.navtab-btn:hover {
+  transform: translateY(-1px);
 }
 
 .navtab-btn.active {
@@ -709,129 +726,124 @@ button[aria-pressed="true"] {
 .navtab-text {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   align-items: flex-start;
   flex: 1;
+  min-width: 0;
 }
 
 .navtab-title {
   font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 0.2px;
+  font-weight: 900;
   line-height: 1.1;
+  letter-spacing: 0.2px;
 }
 
 .navtab-subtitle {
   font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: 700;
+  line-height: 1.25;
   opacity: 0.72;
 }
 
 .navtab-btn.active .navtab-subtitle {
-  opacity: 0.92;
+  opacity: 0.94;
 }
 
 .navtab-icon {
-  width: 52px;
-  height: 52px;
-  min-width: 52px;
-  border-radius: 18px;
+  width: 54px;
+  height: 54px;
+  min-width: 54px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
 }
 
 .navtab-icon.map-mode {
-  background: linear-gradient(
-    135deg,
-    rgba(59, 130, 246, 0.14),
-    rgba(96, 165, 250, 0.22)
-  );
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(96, 165, 250, 0.24));
 }
 
 .navtab-icon.status-mode {
-  background: linear-gradient(
-    135deg,
-    rgba(168, 85, 247, 0.14),
-    rgba(192, 132, 252, 0.22)
-  );
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.16), rgba(192, 132, 252, 0.24));
 }
 
 .navtab-icon.active {
   background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* ===== Radius Card ===== */
+
 .radius-card {
-  padding: 16px 18px;
-  min-height: 112px;
+  min-height: 116px;
+  padding: 16px 18px 17px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
 }
 
 .radius-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 14px;
+  margin-bottom: 13px;
 }
 
 .radius-title-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
+  min-width: 0;
 }
 
 .radius-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 15px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 17px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    rgba(14, 165, 233, 0.18),
-    rgba(59, 130, 246, 0.22)
-  );
   color: #0f4fff;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(59, 130, 246, 0.25));
+  box-shadow:
+    0 10px 22px rgba(37, 99, 235, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58);
 }
 
 .radius-title {
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 900;
   color: #0f172a;
   line-height: 1.1;
 }
 
 .radius-subtitle {
-  font-size: 12px;
-  color: rgba(51, 65, 85, 0.78);
-  font-weight: 600;
   margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(51, 65, 85, 0.76);
+  line-height: 1.25;
 }
 
 .radius-value {
-  padding: 10px 15px;
+  padding: 9px 15px;
   border-radius: 999px;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 950;
   color: #0f4fff;
-  background: linear-gradient(
-    135deg,
-    rgba(59, 130, 246, 0.12),
-    rgba(125, 211, 252, 0.22)
-  );
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
   white-space: nowrap;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.14), rgba(125, 211, 252, 0.26));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    0 8px 18px rgba(37, 99, 235, 0.08);
 }
+
+/* ===== Slider ===== */
 
 .radius-slider-wrap {
   position: relative;
@@ -843,20 +855,22 @@ button[aria-pressed="true"] {
   top: 50%;
   left: 0;
   right: 0;
-  height: 14px;
+  height: 15px;
   transform: translateY(-50%);
   border-radius: 999px;
   background: linear-gradient(
     90deg,
-    rgba(125, 211, 252, 0.28),
-    rgba(59, 130, 246, 0.38),
-    rgba(124, 58, 237, 0.3)
+    rgba(125, 211, 252, 0.3),
+    rgba(59, 130, 246, 0.42),
+    rgba(124, 58, 237, 0.34)
   );
-  filter: blur(10px);
+  filter: blur(11px);
   pointer-events: none;
 }
 
 .radius-slider {
+  position: relative;
+  z-index: 1;
   width: 100%;
   appearance: none;
   -webkit-appearance: none;
@@ -865,39 +879,106 @@ button[aria-pressed="true"] {
   outline: none;
   cursor: pointer;
   background: linear-gradient(90deg, #bae6fd 0%, #60a5fa 50%, #7c3aed 100%);
-  box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.12);
+  box-shadow:
+    inset 0 2px 6px rgba(15, 23, 42, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .radius-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 24px;
-  height: 24px;
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
   background: #ffffff;
   border: 4px solid #2563eb;
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.28);
+  box-shadow:
+    0 8px 22px rgba(37, 99, 235, 0.34),
+    0 0 0 6px rgba(37, 99, 235, 0.1);
   cursor: pointer;
 }
 
 .radius-slider::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
   background: #ffffff;
   border: 4px solid #2563eb;
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.28);
+  box-shadow:
+    0 8px 22px rgba(37, 99, 235, 0.34),
+    0 0 0 6px rgba(37, 99, 235, 0.1);
   cursor: pointer;
 }
 
 .radius-marks {
-  margin-top: 10px;
+  margin-top: 9px;
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   color: rgba(71, 85, 105, 0.82);
 }
+
+/* ===== Radius Search Button ===== */
+
+.radius-action-wrap {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+
+.radius-search-btn {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 48%, #7c3aed 100%);
+  box-shadow:
+    0 13px 28px rgba(37, 99, 235, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    opacity 0.22s ease,
+    filter 0.22s ease;
+}
+
+.radius-search-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 17px 34px rgba(37, 99, 235, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.radius-search-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.radius-search-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+  filter: grayscale(0.35);
+  box-shadow: none;
+}
+
+.radius-disabled {
+  opacity: 0.72;
+}
+
+.radius-disabled .radius-slider {
+  cursor: not-allowed;
+}
+
+/* ===== Hide Button ===== */
 
 .navtabs-hide-btn {
   position: absolute;
@@ -906,19 +987,18 @@ button[aria-pressed="true"] {
   width: 42px;
   height: 42px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.92),
-    rgba(241, 245, 249, 0.88)
-  );
-  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(241, 245, 249, 0.9));
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
   color: #334155;
   z-index: 20;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
+
+/* ===== Decorative Glow ===== */
 
 .navtabs-glow {
   position: absolute;
@@ -927,27 +1007,82 @@ button[aria-pressed="true"] {
 }
 
 .navtabs-glow-blue {
-  width: 180px;
-  height: 180px;
+  width: 190px;
+  height: 190px;
   background: rgba(59, 130, 246, 0.18);
-  top: -70px;
-  right: -40px;
-  filter: blur(40px);
+  top: -76px;
+  right: -46px;
+  filter: blur(42px);
 }
 
 .navtabs-glow-purple {
-  width: 160px;
-  height: 160px;
-  background: rgba(168, 85, 247, 0.16);
-  bottom: -80px;
+  width: 170px;
+  height: 170px;
+  background: rgba(168, 85, 247, 0.15);
+  bottom: -86px;
   left: 10%;
-  filter: blur(42px);
+  filter: blur(44px);
 }
 
 .radius-glow-alt {
   left: auto;
-  right: 5%;
-  bottom: -90px;
+  right: 6%;
+  bottom: -92px;
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 980px) {
+  .navtabs-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .navtabs-card,
+  .radius-card {
+    border-radius: 28px;
+  }
+}
+
+@media (max-width: 620px) {
+  .navtabs-shell {
+    width: calc(100% - 18px);
+    margin-bottom: 12px;
+  }
+
+  .navtabs-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .navtabs-indicator {
+    display: none;
+  }
+
+  .navtab-btn {
+    min-height: 76px;
+    padding: 14px;
+  }
+
+  .navtab-btn.active {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+  }
+
+  .navtab-icon {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+  }
+
+  .radius-top {
+    align-items: flex-start;
+  }
+
+  .radius-subtitle {
+    display: none;
+  }
+
+  .radius-search-btn {
+    width: 100%;
+  }
 }
 
 /* =========================
