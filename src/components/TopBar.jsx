@@ -257,7 +257,7 @@ export default function TopBar({
             <button
               type="button"
               onClick={onClear}
-              title="נקה הכל"
+              title="אפס נתונים"
               className="topbar-action-btn"
             >
               <Trash2 size={19} strokeWidth={2.3} />

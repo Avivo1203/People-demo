@@ -36,6 +36,8 @@ export default function App() {
   });
 
   const [userLocation, setUserLocation] = useState(null);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [nearbySearchTrigger, setNearbySearchTrigger] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [entered, setEntered] = useState(
     () => localStorage.getItem("entered") === "true"
@@ -148,15 +150,36 @@ export default function App() {
   const closeStatusDetails = () => {
     setSelectedStatus(null);
   };
+const clearStatuses = () => {
+  setStatuses([]);
+  setComments([]);
+  setUserLocation(null);
+  setSelectedPlace(null);
+  setRadius(1500);
+  setNearbySearchTrigger(0);
+  setSearchTerm("");
+  setActiveTab("map");
+  setShowTopBar(true);
 
-  const clearStatuses = () => {
-    setStatuses([]);
-    localStorage.removeItem("statuses");
+  localStorage.removeItem("statuses");
+  localStorage.removeItem("comments");
+};
+ const updateUserLocation = (coords) => {
+  setUserLocation(coords);
+
+  const testStatusNearMe = {
+    id: Date.now(),
+    nickname: "בדיקה",
+    text: "אני סטטוס בדיקה ליד המיקום שלך",
+    timestamp: new Date().toISOString(),
+    location: {
+      lat: coords.latitude + 0.001,
+      lng: coords.longitude + 0.001,
+    },
   };
 
-  const updateUserLocation = (coords) => {
-    setUserLocation(coords);
-  };
+  setStatuses((prev) => [testStatusNearMe, ...prev]);
+};
 
   const enterApp = () => {
     localStorage.setItem("entered", "true");
@@ -168,29 +191,33 @@ export default function App() {
     window.location.reload();
   };
 
-  const jumpToMapFromStatus = (loc) => {
-    if (!loc) return;
+ const jumpToMapFromStatus = (loc) => {
+  if (!loc) return;
 
-    setActiveTab("map");
-    setUserLocation({
-      latitude: loc.lat,
-      longitude: loc.lng,
-    });
-    setShowTopBar(true);
-  };
+  setSelectedPlace({
+    lat: loc.lat,
+    lng: loc.lng,
+    name: "מיקום של סטטוס",
+  });
 
-  const handlePlaceSelect = (place) => {
-    const lat = parseFloat(place.lat);
-    const lon = parseFloat(place.lon);
+  setActiveTab("map");
+  setShowTopBar(true);
+};
+const handlePlaceSelect = (place) => {
+  const lat = parseFloat(place.lat);
+  const lon = parseFloat(place.lon);
 
-    setUserLocation({
-      latitude: lat,
-      longitude: lon,
-    });
+  if (Number.isNaN(lat) || Number.isNaN(lon)) return;
 
-    setActiveTab("map");
-    setShowTopBar(true);
-  };
+  setSelectedPlace({
+    lat,
+    lng: lon,
+    name: place.display_name || place.name || "מיקום שנבחר",
+  });
+
+  setActiveTab("map");
+  setShowTopBar(true);
+};
 
   const mapCenterKey = userLocation
     ? `${Number(userLocation.latitude).toFixed(5)},${Number(
@@ -213,28 +240,31 @@ export default function App() {
       }}
     >
       {showTopBar && (
-  <TopBar
-    activeTab={activeTab}
-    setActiveTab={setActiveTab}
-    radius={radius}
-    setRadius={setRadius}
-    searchTerm={searchTerm}
-    onSearchChange={setSearchTerm}
-    onGoHome={goHome}
-    onClear={clearStatuses}
-    onGetLocation={updateUserLocation}
-    onPlaceSelect={handlePlaceSelect}
-    onHideTopBar={() => setShowTopBar(false)}
-    onOpenProfile={() => setIsProfileOpen(true)}
-    // === החיבור החדש של ה-Radius Flow ===
-    onSearchNearby={(currentRadius, currentLoc) => {
-      console.log("🎯 App.jsx caught the Radius Search Flow!", {
-        radius: currentRadius,
-        location: currentLoc
-      });
-      // כאן בעתיד תוכלו להוסיף את הקריאה לשרת (fetch/axios) כדי להביא סטטוסים קרובים
-    }}
-  />
+<TopBar
+  activeTab={activeTab}
+  setActiveTab={setActiveTab}
+  radius={radius}
+  setRadius={setRadius}
+  searchTerm={searchTerm}
+  onSearchChange={setSearchTerm}
+  onGoHome={goHome}
+  onClear={clearStatuses}
+  onGetLocation={updateUserLocation}
+  onPlaceSelect={handlePlaceSelect}
+  onHideTopBar={() => setShowTopBar(false)}
+  onOpenProfile={() => setIsProfileOpen(true)}
+  userLocation={userLocation}
+  onSearchNearby={() => {
+    if (!userLocation) {
+      alert("קודם צריך להפעיל מיקום");
+      return;
+    }
+
+    setActiveTab("map");
+    setShowTopBar(true);
+    setNearbySearchTrigger((prev) => prev + 1);
+  }}
+/>
 )}
 
       {isProfileOpen && (
@@ -253,8 +283,10 @@ export default function App() {
           comments={comments}
           statuses={filteredStatuses}
           userLocation={userLocation}
+          selectedPlace={selectedPlace}
           onOpenStatus={openStatusDetails}
           radius={radius}
+          nearbySearchTrigger={nearbySearchTrigger}
         />
       )}
 

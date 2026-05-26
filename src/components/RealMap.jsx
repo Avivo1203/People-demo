@@ -55,13 +55,16 @@ export default function RealMap({
   onOpenChat,
   onOpenStatus,
   userLocation,
+  selectedPlace,
   radius = 1500,
+    nearbySearchTrigger,
+
 }) {
   const defaultCenter = useMemo(() => ({ lat: 32.0853, lng: 34.7818 }), []);
-  const [center, setCenter] = useState(defaultCenter);
-  const [selectedPoint, setSelectedPoint] = useState(null);
-  const [nearby, setNearby] = useState([]);
-
+const [center, setCenter] = useState(defaultCenter);
+const [selectedPoint, setSelectedPoint] = useState(null);
+const [nearby, setNearby] = useState([]);
+const [hasSearchedNearby, setHasSearchedNearby] = useState(false);
   const pulseIcon = useMemo(
     () =>
       L.divIcon({
@@ -94,9 +97,33 @@ export default function RealMap({
       setSelectedPoint(point);
       setCenter(point);
       setNearby([]);
+      setHasSearchedNearby(false);
     }
   }, [userLocation]);
 
+// מיקום שחיפשנו דרך SearchBar
+useEffect(() => {
+  if (selectedPlace?.lat && selectedPlace?.lng) {
+    const point = {
+      lat: selectedPlace.lat,
+      lng: selectedPlace.lng,
+    };
+
+    // מזיז רק את המפה
+    // לא מחליף את המיקום האמיתי של המשתמש
+    setCenter(point);
+  }
+}, [selectedPlace]);
+
+// איפוס מלא של המפה כאשר עושים "אפס נתונים"
+useEffect(() => {
+  if (!userLocation && !selectedPlace) {
+    setSelectedPoint(null);
+    setNearby([]);
+    setHasSearchedNearby(false);
+    setCenter(defaultCenter);
+  }
+}, [userLocation, selectedPlace, defaultCenter]);
   const validStatuses = useMemo(() => {
     return statuses.filter(
       (s) =>
@@ -131,35 +158,50 @@ export default function RealMap({
     return map;
   }, [comments]);
 
-  const handleFindPeople = useCallback(() => {
-    if (!selectedPoint) return;
+ const handleFindPeople = useCallback(() => {
+  if (!selectedPoint) {
+    alert("קודם צריך להפעיל מיקום כדי לחפש אנשים סביבך");
+    return;
+  }
 
-    const results = validStatuses
-      .map((status) => {
-        const distance = haversineMeters(selectedPoint, {
-          lat: status.location.lat,
-          lng: status.location.lng,
-        });
+  const results = validStatuses
+    .map((status) => {
+      const distance = haversineMeters(selectedPoint, {
+        lat: status.location.lat,
+        lng: status.location.lng,
+      });
 
-        return {
-          ...status,
-          _distanceM: distance,
-        };
-      })
-      .filter((status) => status._distanceM <= radius)
-      .sort((a, b) => a._distanceM - b._distanceM);
+      return {
+        ...status,
+        _distanceM: distance,
+      };
+    })
+    .filter((status) => status._distanceM <= radius)
+    .sort((a, b) => a._distanceM - b._distanceM);
 
-    setNearby(results);
-  }, [selectedPoint, validStatuses, radius]);
+  setNearby(results);
+  setHasSearchedNearby(true);
+  setCenter(selectedPoint);
+}, [selectedPoint, validStatuses, radius]);
 
-  const clearSelection = () => {
-    setSelectedPoint(null);
-    setNearby([]);
-    setCenter(defaultCenter);
-  };
+// מפעיל את החיפוש מהכפתור העליון של Search Nearby People
+useEffect(() => {
+  if (nearbySearchTrigger > 0) {
+    handleFindPeople();
+  }
+}, [nearbySearchTrigger, handleFindPeople]);
+const clearSelection = () => {
+  setNearby([]);
+  setHasSearchedNearby(false);
 
-  const displayedStatuses = nearby.length > 0 ? nearby : validStatuses;
+  if (selectedPoint) {
+    setCenter(selectedPoint);
+    return;
+  }
 
+  setCenter(defaultCenter);
+};
+const displayedStatuses = hasSearchedNearby ? nearby : [];
   return (
     <div className="realmap-shell">
       <MapContainer
@@ -180,7 +222,7 @@ export default function RealMap({
             <Marker position={selectedPoint} icon={pulseIcon}>
               <Popup>
                 <div className="map-popup-card">
-                  <strong className="map-popup-title">מיקום נבחר</strong>
+                  <strong className="map-popup-title">המיקום שלי</strong>
 
                   <span className="map-popup-coords">
                     lat {selectedPoint.lat.toFixed(5)}, lng{" "}
@@ -275,18 +317,14 @@ export default function RealMap({
       <div className="map-fab-panel">
         {selectedPoint ? (
           <>
-            <button className="map-fab" onClick={handleFindPeople}>
-              <Search size={16} strokeWidth={2.2} />
-              <span>חפש אנשים</span>
-            </button>
-
+            
             <button className="map-fab" onClick={clearSelection}>
               <X size={16} strokeWidth={2.2} />
-              <span>נקה</span>
+              <span>אפס חיפוש</span>
             </button>
           </>
         ) : (
-          <div className="map-hint">בחר מיקום בחיפוש למעלה</div>
+          <div className="map-hint">הפעל מיקום כדי לחפש אנשים סביבך</div>
         )}
       </div>
     </div>

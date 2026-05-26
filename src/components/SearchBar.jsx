@@ -9,12 +9,15 @@ export default function SearchBar({
 }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
 
   useEffect(() => {
+    if (isSelecting) return;
+
     const delayDebounce = setTimeout(() => {
       if (searchTerm.trim().length > 2) {
         fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=6&q=${encodeURIComponent(
             searchTerm
           )}`
         )
@@ -35,13 +38,39 @@ export default function SearchBar({
     }, 400);
 
     return () => clearTimeout(delayDebounce);
-  }, [searchTerm]);
+  }, [searchTerm, isSelecting]);
 
   const handleSelect = (place) => {
-    onSearchChange(place.display_name);
+    const lat = parseFloat(place.lat);
+    const lon = parseFloat(place.lon);
+
+    if (Number.isNaN(lat) || Number.isNaN(lon)) {
+      console.error("Invalid place coordinates:", place);
+      return;
+    }
+
+    setIsSelecting(true);
+
+    onPlaceSelect?.({
+      ...place,
+      lat,
+      lon,
+      display_name: place.display_name || "מיקום שנבחר",
+    });
+
+    onSearchChange?.(place.display_name || "");
     setSuggestions([]);
     setShowDropdown(false);
-    onPlaceSelect?.(place);
+
+    setTimeout(() => {
+      setIsSelecting(false);
+    }, 300);
+  };
+
+  const handleClear = () => {
+    onSearchChange?.("");
+    setSuggestions([]);
+    setShowDropdown(false);
   };
 
   return (
@@ -52,8 +81,12 @@ export default function SearchBar({
           autoComplete="off"
           placeholder="חפש מיקום / אזור…"
           value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          onFocus={() => searchTerm && setShowDropdown(true)}
+          onChange={(e) => onSearchChange?.(e.target.value)}
+          onFocus={() => {
+            if (searchTerm.trim().length > 2 && suggestions.length > 0) {
+              setShowDropdown(true);
+            }
+          }}
           className="searchbar-input"
         />
 
@@ -65,11 +98,7 @@ export default function SearchBar({
           <button
             type="button"
             aria-label="נקה חיפוש"
-            onClick={() => {
-              onSearchChange("");
-              setSuggestions([]);
-              setShowDropdown(false);
-            }}
+            onClick={handleClear}
             className="searchbar-clear-btn"
           >
             <X size={18} strokeWidth={2.4} />
@@ -83,6 +112,7 @@ export default function SearchBar({
             <button
               type="button"
               key={place.place_id}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => handleSelect(place)}
               className="searchbar-result"
             >
@@ -92,8 +122,9 @@ export default function SearchBar({
 
               <div className="searchbar-result-content">
                 <div className="searchbar-result-title">
-                  {place.display_name.split(",")[0]}
+                  {place.display_name?.split(",")[0] || "מיקום"}
                 </div>
+
                 <div className="searchbar-result-subtitle">
                   {place.display_name}
                 </div>
