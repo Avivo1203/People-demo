@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import "./WelcomePage.css";
 
-const API_URL = "http://localhost:5000/api/auth";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function WelcomePage({ onEnter, onGuestEnter }) {
   const [mode, setMode] = useState("login");
@@ -95,7 +95,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
     }
 
     try {
-      const response = await fetch(`${API_URL}/register`, {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -139,7 +139,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
     }
 
     try {
-      const response = await fetch(`${API_URL}/login`, {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
