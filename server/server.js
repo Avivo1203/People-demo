@@ -25,10 +25,11 @@ app.get('/', (req, res) => {
 });
 
 // --- הגשת ה-Frontend ב-Production ---
-// כעת ה-dist נמצא בתוך תיקיית ה-server בזכות פקודת ה-cp ב-Build Command
+// מוגש מתוך תיקיית ה-dist בתוך ה-server לאחר שהועתק לשם ב-Build
 app.use(express.static(path.join(__dirname, 'dist')));
 
-app.get('*', (req, res) => {
+// תיקון עבור Express 5: שימוש ב-/* במקום *
+app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
