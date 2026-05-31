@@ -1,44 +1,42 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config(); // טוען את המשתנים מקובץ ה-.env לתוך התוכנית
+const path = require('path'); // הוספנו את path כדי לנהל נתיבים
+require('dotenv').config();
 
 const app = express();
 
 // Middlewares
-app.use(cors({
-  origin: 'http://localhost:5173', // מאשר לפרונטאנד שלכם לדבר עם השרת
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-})); 
+// הסרנו את ההגבלה ל-localhost כדי שהשרת יעבוד מכל מקום ב-Deploy
+app.use(cors()); 
 
-app.use(express.json()); // מאפשר לשרת לקרוא מידע שמגיע בפורמט JSON
+app.use(express.json());
 
-// ייבוא ה-Routes של האימות
+// ייבוא ה-Routes
 const authRoutes = require('./routes/authRoutes');
-
-// קישור ה-Routes לכתובת בסיס קבועה
 app.use('/api/auth', authRoutes);
 
-// נתיב בדיקה בסיסי כדי לראות שהשרת חי ומגיב
-app.get('/', (req, res) => {
-  res.send('The Engine is Running!');
+// --- הוספת ההגשה של ה-Frontend ---
+// וודא שהתיקייה עם ה-build שלך נקראת 'dist' (זה הדיפולט של Vite)
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// כל נתיב שלא מתחיל ב-/api יפנה ל-index.html של ה-React
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 
 // הגדרת הפורט
 const PORT = process.env.PORT || 5000;
 
-// חיבור לבסיס הנתונים MongoDB - הפעלת השרת תתבצע רק לאחר חיבור מוצלח!
+// חיבור לבסיס הנתונים והרצת השרת
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('✅ Connected successfully to MongoDB');
-    
-    // רק כשהחיבור למונגו הצליח, השרת מתחיל להקשיב לבקשות
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
     });
   })
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err);
-    process.exit(1); // סגירת התהליך אם אין חיבור לדאטהבייס
+    process.exit(1);
   });
