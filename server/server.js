@@ -13,15 +13,10 @@ app.use(express.json());
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-// הגשת ה-Frontend
+// 1. הגשת קבצים סטטיים (JS, CSS וכו') מתוך dist
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// במקום להשתמש ב-* שגורם לקריסה, נשתמש בנתיב מפורש או נשלח את האינדקס
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-// אם הנתיב לא מתחיל ב-api, נגיש את ה-index.html
+// 2. Middleware שמעביר כל בקשה שאינה API לתוך ה-React
 app.use((req, res, next) => {
     if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(__dirname, 'dist', 'index.html'));
@@ -33,4 +28,7 @@ app.use((req, res, next) => {
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => app.listen(PORT, () => console.log(`🚀 Server running on ${PORT}`)))
-  .catch((err) => process.exit(1));
+  .catch((err) => {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
+  });
