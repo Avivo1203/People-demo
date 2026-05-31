@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import "./WelcomePage.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// שימוש בנתיב יחסי - זה יעבוד אוטומטית גם במחשב וגם בנייד
+const API_URL = "";
 
 export default function WelcomePage({ onEnter, onGuestEnter }) {
   const [mode, setMode] = useState("login");
