@@ -123,9 +123,9 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
       localStorage.setItem("guest", "false");
 
       onEnter();
-    } catch (err) {
-      setError("שגיאה בחיבור לשרת. בדוק שה־Backend פועל.");
-    }
+} catch (err) {
+  setError("משהו השתבש, אנא נסה שוב בעוד רגע.");
+}
   };
 
   const handleLogin = async (e) => {
