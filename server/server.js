@@ -6,45 +6,31 @@ require('dotenv').config();
 
 const app = express();
 
-// Middlewares
-app.use(cors({
-  origin: '*', 
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-})); 
-
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE'], credentials: true })); 
 app.use(express.json());
 
-// ייבוא ה-Routes
+// API Routes
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-// נתיב בדיקה לשרת
-app.get('/', (req, res) => {
-  res.send('The Engine is Running!');
-});
-
-// --- הגשת ה-Frontend ב-Production ---
-// מוגש מתוך תיקיית ה-dist בתוך ה-server לאחר שהועתק לשם ב-Build
+// הגשת ה-Frontend
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// תיקון עבור Express 5: שימוש ב-/* במקום *
-app.get('/*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+// במקום להשתמש ב-* שגורם לקריסה, נשתמש בנתיב מפורש או נשלח את האינדקס
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-// הגדרת הפורט
-const PORT = process.env.PORT || 5000;
+// אם הנתיב לא מתחיל ב-api, נגיש את ה-index.html
+app.use((req, res, next) => {
+    if (!req.path.startsWith('/api')) {
+        res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    } else {
+        next();
+    }
+});
 
-// חיבור ל-MongoDB והרצת השרת
+const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('✅ Connected successfully to MongoDB');
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
-    process.exit(1);
-  });
+  .then(() => app.listen(PORT, () => console.log(`🚀 Server running on ${PORT}`)))
+  .catch((err) => process.exit(1));
