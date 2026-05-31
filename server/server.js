@@ -8,7 +8,7 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: '*', // מאשר גישה מכל מקום
+  origin: '*', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 })); 
@@ -25,11 +25,11 @@ app.get('/', (req, res) => {
 });
 
 // --- הגשת ה-Frontend ב-Production ---
-// הקוד הזה יופעל רק ב-Render לאחר שה-Build יסתיים
-app.use(express.static(path.join(__dirname, '../dist')));
+// כעת ה-dist נמצא בתוך תיקיית ה-server בזכות פקודת ה-cp ב-Build Command
+app.use(express.static(path.join(__dirname, 'dist')));
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // הגדרת הפורט
