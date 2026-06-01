@@ -329,3 +329,324 @@
   gap: 8px;
 }
 }
+
+/* =========================================================
+   PROFILE CARD MOBILE FINAL OVERRIDE
+   Added safely at the end of ProfileCard.css
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .profile-card-overlay {
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 10px !important;
+  }
+
+  .profile-card {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 88dvh !important;
+    overflow-y: auto !important;
+    border-radius: 26px 26px 18px 18px !important;
+  }
+
+  .profile-card-header {
+    padding: 0 16px 18px !important;
+  }
+
+  .profile-card-close {
+    top: 12px !important;
+    left: 12px !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 13px !important;
+  }
+
+  .profile-card-cover {
+    height: 118px !important;
+    border-radius: 0 0 22px 22px !important;
+  }
+
+  .profile-card-avatar-wrap {
+    right: 18px !important;
+    bottom: -38px !important;
+  }
+
+  .profile-card-avatar {
+    width: 82px !important;
+    height: 82px !important;
+    border-radius: 24px !important;
+  }
+
+  .profile-card-avatar span {
+    font-size: 25px !important;
+  }
+
+  .profile-card-main {
+    padding-top: 48px !important;
+  }
+
+  .profile-card-name-row h2 {
+    font-size: 22px !important;
+    line-height: 1.2 !important;
+  }
+
+  .profile-card-username {
+    font-size: 13px !important;
+  }
+
+  .profile-card-bio {
+    max-width: 100% !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  .profile-card-tags {
+    gap: 8px !important;
+    margin-top: 13px !important;
+  }
+
+  .profile-tag {
+    padding: 8px 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  .profile-card-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding: 0 16px !important;
+  }
+
+  .profile-stat-box {
+    padding: 12px 8px !important;
+    border-radius: 18px !important;
+  }
+
+  .profile-stat-box strong {
+    font-size: 19px !important;
+  }
+
+  .profile-stat-box span {
+    margin-top: 4px !important;
+    font-size: 11px !important;
+  }
+
+  .profile-card-section {
+    padding: 16px 16px 0 !important;
+  }
+
+  .profile-card-section-title {
+    margin-bottom: 9px !important;
+    font-size: 12px !important;
+  }
+
+  .profile-card-info-grid {
+    grid-template-columns: 1fr !important;
+    gap: 9px !important;
+  }
+
+  .profile-info-item {
+    padding: 13px !important;
+    border-radius: 17px !important;
+  }
+
+  .profile-info-item .label {
+    margin-bottom: 6px !important;
+    font-size: 11.5px !important;
+  }
+
+  .profile-info-item strong {
+    font-size: 14px !important;
+  }
+
+  .profile-card-actions {
+    position: sticky !important;
+    bottom: 0 !important;
+    padding: 12px 16px 16px !important;
+    flex-direction: column !important;
+    gap: 9px !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+  }
+
+  .profile-primary-btn,
+  .profile-secondary-btn {
+    min-height: 44px !important;
+    border-radius: 16px !important;
+    padding: 12px 14px !important;
+  }
+}
+
+/* =========================================================
+   PROFILE CARD - MOBILE PRO V2
+   Safe final override
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .profile-card-overlay {
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 10px !important;
+    background: rgba(8, 18, 35, 0.48) !important;
+    backdrop-filter: blur(12px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
+  }
+
+  .profile-card {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 88dvh !important;
+    overflow-y: auto !important;
+    border-radius: 28px 28px 18px 18px !important;
+    background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(248,251,255,0.94)) !important;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.26) !important;
+  }
+
+  .profile-card-header {
+    padding: 0 16px 18px !important;
+  }
+
+  .profile-card-close {
+    top: 12px !important;
+    left: 12px !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 14px !important;
+    background: rgba(255,255,255,0.9) !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .profile-card-cover {
+    height: 112px !important;
+    border-radius: 0 0 24px 24px !important;
+    background: linear-gradient(135deg, #4f8cff 0%, #72c6ff 54%, #a78bfa 100%) !important;
+  }
+
+  .profile-card-avatar-wrap {
+    right: 18px !important;
+    bottom: -36px !important;
+  }
+
+  .profile-card-avatar {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 24px !important;
+    box-shadow: 0 14px 26px rgba(15, 23, 42, 0.18) !important;
+  }
+
+  .profile-card-avatar span {
+    font-size: 24px !important;
+    color: #3478e5 !important;
+  }
+
+  .profile-card-main {
+    padding-top: 46px !important;
+  }
+
+  .profile-card-name-row {
+    gap: 8px !important;
+  }
+
+  .profile-card-name-row h2 {
+    font-size: 21px !important;
+    line-height: 1.2 !important;
+  }
+
+  .profile-card-username {
+    margin-top: 3px !important;
+    font-size: 12.5px !important;
+  }
+
+  .profile-card-bio {
+    max-width: 100% !important;
+    margin-top: 11px !important;
+    font-size: 13.5px !important;
+    line-height: 1.58 !important;
+  }
+
+  .profile-card-tags {
+    gap: 7px !important;
+    margin-top: 12px !important;
+  }
+
+  .profile-tag {
+    padding: 7px 10px !important;
+    font-size: 11px !important;
+    background: linear-gradient(135deg, #edf6ff, #ffffff) !important;
+    color: #2563eb !important;
+  }
+
+  .profile-card-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding: 0 16px !important;
+  }
+
+  .profile-stat-box {
+    padding: 11px 7px !important;
+    border-radius: 18px !important;
+    background: rgba(255,255,255,0.82) !important;
+  }
+
+  .profile-stat-box strong {
+    font-size: 18px !important;
+  }
+
+  .profile-stat-box span {
+    margin-top: 4px !important;
+    font-size: 10.5px !important;
+  }
+
+  .profile-card-section {
+    padding: 15px 16px 0 !important;
+  }
+
+  .profile-card-section-title {
+    margin-bottom: 8px !important;
+    font-size: 11.5px !important;
+  }
+
+  .profile-card-info-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .profile-info-item {
+    padding: 12px !important;
+    border-radius: 17px !important;
+  }
+
+  .profile-info-item .label {
+    margin-bottom: 5px !important;
+    font-size: 11px !important;
+  }
+
+  .profile-info-item strong {
+    font-size: 13.5px !important;
+  }
+
+  .profile-card-actions {
+    position: sticky !important;
+    bottom: 0 !important;
+    padding: 12px 16px 16px !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.72) !important;
+  }
+
+  .profile-primary-btn,
+  .profile-secondary-btn {
+    min-height: 43px !important;
+    border-radius: 17px !important;
+    padding: 11px 14px !important;
+  }
+
+  .profile-primary-btn {
+    background: linear-gradient(135deg, #4f8cff, #72c6ff) !important;
+    box-shadow: 0 10px 22px rgba(79, 140, 255, 0.18) !important;
+  }
+}
