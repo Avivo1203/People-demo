@@ -4,7 +4,6 @@ import { Search, X, MapPin } from "lucide-react";
 export default function SearchBar({
   searchTerm,
   onSearchChange,
-  onOpenChat,
   onPlaceSelect,
 }) {
   const [suggestions, setSuggestions] = useState([]);

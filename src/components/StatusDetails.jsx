@@ -13,9 +13,11 @@ export default function StatusDetails({
   if (!status) return null;
 
   const nickname = status.nickname?.trim() || "משתמש";
+  const firstLetter = nickname[0] || "מ";
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
     if (!commentText.trim()) return;
 
     onAddComment?.(status.id, commentText);
@@ -26,23 +28,25 @@ export default function StatusDetails({
     <div className="status-details-overlay" onClick={onClose}>
       <div
         className="status-details-modal clean-status-modal"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
         <button
           type="button"
           className="status-details-close"
           onClick={onClose}
           title="סגור"
+          aria-label="סגור חלון סטטוס"
         >
           <X size={18} strokeWidth={2.4} />
         </button>
 
         <div className="status-details-header">
           <div className="status-details-user-block">
-            <div className="status-details-avatar">{nickname[0]}</div>
+            <div className="status-details-avatar">{firstLetter}</div>
 
             <div className="status-details-user-info">
               <h3>{nickname}</h3>
+
               <span className="status-details-time">
                 <TimeAgo timestamp={status.timestamp} />
               </span>
@@ -51,7 +55,7 @@ export default function StatusDetails({
         </div>
 
         <div className="status-details-body clean-status-body">
-          <p>{status.text}</p>
+          <p>{status.text || "—"}</p>
         </div>
 
         <div className="status-details-footer clean-status-footer">
@@ -79,7 +83,7 @@ export default function StatusDetails({
               className="status-comment-input"
               placeholder="כתוב תגובה לסטטוס..."
               value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
+              onChange={(event) => setCommentText(event.target.value)}
               rows={3}
             />
 

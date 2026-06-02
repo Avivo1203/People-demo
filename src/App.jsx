@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import RealMap from "./components/RealMap";
 import StatusArea from "./components/StatusArea";
 import StatusDetails from "./components/StatusDetails";
@@ -7,68 +7,72 @@ import TopBar from "./components/TopBar";
 import ProfileCard from "./components/ProfileCard";
 import "./index.css";
 
-export default function App() {
-  const [statuses, setStatuses] = useState(() => {
-    const saved = localStorage.getItem("statuses");
-    return saved ? JSON.parse(saved) : [];
-  });
+const STATUS_LIFETIME_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_RADIUS = 1500;
 
-  const [comments, setComments] = useState(() => {
-    const saved = localStorage.getItem("comments");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          {
-            id: 1,
-            statusId: 1001,
-            nickname: "טל",
-            text: "אני זורם, איפה בדיוק?",
-            timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-          },
-          {
-            id: 2,
-            statusId: 1002,
-            nickname: "דניס",
-            text: "יש לי מצית, אני קרוב.",
-            timestamp: new Date(Date.now() - 1000 * 60 * 11).toISOString(),
-          },
-        ];
-  });
+function loadFromStorage(key, fallback) {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function isStatusFresh(status) {
+  if (!status?.timestamp) return false;
+
+  const createdAt = new Date(status.timestamp).getTime();
+  if (Number.isNaN(createdAt)) return false;
+
+  return Date.now() - createdAt < STATUS_LIFETIME_MS;
+}
+
+export default function App() {
+  const [statuses, setStatuses] = useState(() =>
+    loadFromStorage("statuses", []).filter(isStatusFresh)
+  );
+
+  const [comments, setComments] = useState(() =>
+    loadFromStorage("comments", [])
+  );
+
+  const [currentUser, setCurrentUser] = useState(() =>
+    loadFromStorage("currentUser", {
+      fullName: "משתמש אורח",
+      nickname: "guest",
+      bio: "משתמש זמני באפליקציית People.",
+      city: "לא הוגדר",
+      mood: "זמין",
+      vibe: "חברתי",
+      statusCount: 0,
+      avatarUrl: "",
+    })
+  );
+
+  const [entered, setEntered] = useState(
+    () => localStorage.getItem("entered") === "true"
+  );
 
   const [userLocation, setUserLocation] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [nearbySearchTrigger, setNearbySearchTrigger] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [entered, setEntered] = useState(
-    () => localStorage.getItem("entered") === "true"
-  );
   const [selectedStatus, setSelectedStatus] = useState(null);
-
   const [activeTab, setActiveTab] = useState("map");
   const [showTopBar, setShowTopBar] = useState(true);
-  const [radius, setRadius] = useState(1500);
-
+  const [radius, setRadius] = useState(DEFAULT_RADIUS);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem("currentUser");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          fullName: "Aviv Oshri",
-          nickname: "aviv",
-          bio: "בונה את People – אפליקציה לחיבור בין אנשים לפי מיקום, פיד וסטטוסים.",
-          city: "נתניה",
-          mood: "פתוח להכיר ולעזור",
-          vibe: "חברתי / יוזם",
-          goodDeeds: 7,
-          statusCount: 12,
-          avatarUrl: "",
-        };
-  });
-
   useEffect(() => {
-    localStorage.setItem("statuses", JSON.stringify(statuses));
+    const freshStatuses = statuses.filter(isStatusFresh);
+
+    if (freshStatuses.length !== statuses.length) {
+      setStatuses(freshStatuses);
+      return;
+    }
+
+    localStorage.setItem("statuses", JSON.stringify(freshStatuses));
   }, [statuses]);
 
   useEffect(() => {
@@ -80,106 +84,80 @@ export default function App() {
   }, [currentUser]);
 
   useEffect(() => {
-    if (statuses.length === 0) {
-      const starterStatuses = [
-        {
-          id: 1001,
-          nickname: "דניס",
-          text: "מישהו זורם לכדורגל באזור?",
-          timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-          location: { lat: 32.0853, lng: 34.7818 },
-        },
-        {
-          id: 1002,
-          nickname: "טל",
-          text: "יש למישהו גחלים או מצית? אנחנו בפארק",
-          timestamp: new Date(Date.now() - 1000 * 60 * 17).toISOString(),
-          location: { lat: 32.082, lng: 34.779 },
-        },
-        {
-          id: 1003,
-          nickname: "אביב",
-          text: "מי באזור ורוצה לקפוץ לקפה?",
-          timestamp: new Date(Date.now() - 1000 * 60 * 33).toISOString(),
-          location: { lat: 32.0795, lng: 34.7862 },
-        },
-      ];
+    const cleanupInterval = setInterval(() => {
+      setStatuses((prev) => prev.filter(isStatusFresh));
+    }, 60 * 1000);
 
-      setStatuses(starterStatuses);
-    }
-  }, [statuses.length]);
+    return () => clearInterval(cleanupInterval);
+  }, []);
 
-  const filteredStatuses = statuses
-    .filter((status) => {
-      const age = Date.now() - new Date(status.timestamp).getTime();
+  const filteredStatuses = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
 
-      return (
-        age < 24 * 60 * 60 * 1000 &&
-        ((status.nickname || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-          (status.text || "")
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()))
-      );
-    })
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    return statuses
+      .filter((status) => {
+        if (!isStatusFresh(status)) return false;
+
+        if (!term) return true;
+
+        return (
+          (status.nickname || "").toLowerCase().includes(term) ||
+          (status.text || "").toLowerCase().includes(term)
+        );
+      })
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }, [statuses, searchTerm]);
 
   const addStatus = (newStatus) => {
     setStatuses((prev) => [newStatus, ...prev]);
+
+    setCurrentUser((prev) => ({
+      ...prev,
+      statusCount: (prev.statusCount || 0) + 1,
+    }));
   };
 
   const addComment = (statusId, text) => {
-    if (!text.trim()) return;
+    const cleanText = text.trim();
+    if (!cleanText) return;
 
     const newComment = {
       id: Date.now(),
       statusId,
-      nickname: currentUser?.nickname || currentUser?.fullName || "אני",
-      text: text.trim(),
+      nickname: currentUser?.nickname || "אני",
+      text: cleanText,
       timestamp: new Date().toISOString(),
     };
 
     setComments((prev) => [newComment, ...prev]);
   };
 
-  const openStatusDetails = (status) => {
-    setSelectedStatus(status);
-  };
-
-  const closeStatusDetails = () => {
+  const clearStatuses = () => {
+    setStatuses([]);
+    setComments([]);
+    setUserLocation(null);
+    setSelectedPlace(null);
+    setRadius(DEFAULT_RADIUS);
+    setNearbySearchTrigger(0);
+    setSearchTerm("");
+    setActiveTab("map");
+    setShowTopBar(true);
     setSelectedStatus(null);
-  };
-const clearStatuses = () => {
-  setStatuses([]);
-  setComments([]);
-  setUserLocation(null);
-  setSelectedPlace(null);
-  setRadius(1500);
-  setNearbySearchTrigger(0);
-  setSearchTerm("");
-  setActiveTab("map");
-  setShowTopBar(true);
 
-  localStorage.removeItem("statuses");
-  localStorage.removeItem("comments");
-};
- const updateUserLocation = (coords) => {
-  setUserLocation(coords);
-
-  const testStatusNearMe = {
-    id: Date.now(),
-    nickname: "בדיקה",
-    text: "אני סטטוס בדיקה ליד המיקום שלך",
-    timestamp: new Date().toISOString(),
-    location: {
-      lat: coords.latitude + 0.001,
-      lng: coords.longitude + 0.001,
-    },
+    localStorage.removeItem("statuses");
+    localStorage.removeItem("comments");
   };
 
-  setStatuses((prev) => [testStatusNearMe, ...prev]);
-};
+  const updateUserLocation = (coords) => {
+    if (!coords) {
+      setUserLocation(null);
+      setSelectedPlace(null);
+      setNearbySearchTrigger(0);
+      return;
+    }
+
+    setUserLocation(coords);
+  };
 
   const enterApp = () => {
     localStorage.setItem("entered", "true");
@@ -191,33 +169,68 @@ const clearStatuses = () => {
     window.location.reload();
   };
 
- const jumpToMapFromStatus = (loc) => {
-  if (!loc) return;
+  const jumpToMapFromStatus = (loc) => {
+    if (!loc) return;
 
-  setSelectedPlace({
-    lat: loc.lat,
-    lng: loc.lng,
-    name: "מיקום של סטטוס",
-  });
+    setSelectedPlace({
+      lat: loc.lat,
+      lng: loc.lng,
+      name: "מיקום של סטטוס",
+    });
 
-  setActiveTab("map");
-  setShowTopBar(true);
-};
-const handlePlaceSelect = (place) => {
-  const lat = parseFloat(place.lat);
-  const lon = parseFloat(place.lon);
+    setActiveTab("map");
+    setShowTopBar(true);
+  };
 
-  if (Number.isNaN(lat) || Number.isNaN(lon)) return;
+  const handlePlaceSelect = (place) => {
+    const lat = parseFloat(place.lat);
+    const lon = parseFloat(place.lon);
 
-  setSelectedPlace({
-    lat,
-    lng: lon,
-    name: place.display_name || place.name || "מיקום שנבחר",
-  });
+    if (Number.isNaN(lat) || Number.isNaN(lon)) return;
 
-  setActiveTab("map");
-  setShowTopBar(true);
-};
+    setSelectedPlace({
+      lat,
+      lng: lon,
+      name: place.display_name || place.name || "מיקום שנבחר",
+    });
+
+    setActiveTab("map");
+    setShowTopBar(true);
+  };
+
+  const handleSearchNearby = () => {
+    if (!userLocation) {
+      alert("קודם צריך להפעיל מיקום");
+      return;
+    }
+
+    const testStatusNearMe = {
+      id: Date.now(),
+      nickname: "בדיקה",
+      text: "אני סטטוס בדיקה ליד המיקום שלך",
+      timestamp: new Date().toISOString(),
+      location: {
+        lat: userLocation.latitude + 0.001,
+        lng: userLocation.longitude + 0.001,
+      },
+    };
+
+    setStatuses((prev) => [testStatusNearMe, ...prev]);
+    setActiveTab("map");
+    setShowTopBar(true);
+    setNearbySearchTrigger((prev) => prev + 1);
+  };
+
+  const openProfileFromStatus = (status) => {
+    setCurrentUser((prev) => ({
+      ...prev,
+      fullName: status.nickname || prev.fullName,
+      nickname: status.nickname || prev.nickname,
+      bio: status.text || prev.bio,
+    }));
+
+    setIsProfileOpen(true);
+  };
 
   const mapCenterKey = userLocation
     ? `${Number(userLocation.latitude).toFixed(5)},${Number(
@@ -230,49 +243,32 @@ const handlePlaceSelect = (place) => {
   }
 
   return (
-    <div
-      className="app-container"
-      dir="rtl"
-      style={{
-        height: "100vh",
-        overflow: "hidden",
-        position: "relative",
-      }}
-    >
+    <div className="app-container" dir="rtl">
       {showTopBar && (
-<TopBar
-  activeTab={activeTab}
-  setActiveTab={setActiveTab}
-  radius={radius}
-  setRadius={setRadius}
-  searchTerm={searchTerm}
-  onSearchChange={setSearchTerm}
-  onGoHome={goHome}
-  onClear={clearStatuses}
-  onGetLocation={updateUserLocation}
-  onPlaceSelect={handlePlaceSelect}
-  onHideTopBar={() => setShowTopBar(false)}
-  onOpenProfile={() => setIsProfileOpen(true)}
-  userLocation={userLocation}
-  onSearchNearby={() => {
-    if (!userLocation) {
-      alert("קודם צריך להפעיל מיקום");
-      return;
-    }
-
-    setActiveTab("map");
-    setShowTopBar(true);
-    setNearbySearchTrigger((prev) => prev + 1);
-  }}
-/>
-)}
+        <TopBar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          radius={radius}
+          setRadius={setRadius}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onGoHome={goHome}
+          onClear={clearStatuses}
+          onGetLocation={updateUserLocation}
+          onPlaceSelect={handlePlaceSelect}
+          onHideTopBar={() => setShowTopBar(false)}
+          onOpenProfile={() => setIsProfileOpen(true)}
+          userLocation={userLocation}
+          onSearchNearby={handleSearchNearby}
+        />
+      )}
 
       {isProfileOpen && (
         <ProfileCard
           user={currentUser}
           onClose={() => setIsProfileOpen(false)}
           onEdit={() => {
-            alert("שלב הבא: Profile Panel / Edit Profile");
+            alert("עריכת פרופיל תתווסף בשלב הבא");
           }}
         />
       )}
@@ -280,11 +276,11 @@ const handlePlaceSelect = (place) => {
       {activeTab === "map" && (
         <RealMap
           key={mapCenterKey}
-          comments={comments}
           statuses={filteredStatuses}
+          comments={comments}
           userLocation={userLocation}
           selectedPlace={selectedPlace}
-          onOpenStatus={openStatusDetails}
+          onOpenStatus={setSelectedStatus}
           radius={radius}
           nearbySearchTrigger={nearbySearchTrigger}
         />
@@ -296,18 +292,10 @@ const handlePlaceSelect = (place) => {
           comments={comments}
           userLocation={userLocation}
           onAddStatus={addStatus}
-          onOpenStatus={openStatusDetails}
+          onOpenStatus={setSelectedStatus}
           onJumpToMap={jumpToMapFromStatus}
           radius={radius}
-          onOpenProfile={(status) => {
-            setCurrentUser((prev) => ({
-              ...prev,
-              fullName: status.nickname || prev.fullName,
-              nickname: status.nickname || prev.nickname,
-              bio: status.text || prev.bio,
-            }));
-            setIsProfileOpen(true);
-          }}
+          onOpenProfile={openProfileFromStatus}
         />
       )}
 
@@ -318,7 +306,7 @@ const handlePlaceSelect = (place) => {
             (comment) => comment.statusId === selectedStatus.id
           )}
           onAddComment={addComment}
-          onClose={closeStatusDetails}
+          onClose={() => setSelectedStatus(null)}
         />
       )}
     </div>

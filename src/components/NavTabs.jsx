@@ -4,7 +4,7 @@ import {
   MessageSquareText,
   Radius,
   X,
-  Search, // ייבוא אייקון חיפוש יפה לכפתור החדש
+  Search,
 } from "lucide-react";
 
 export default function NavTabs({
@@ -13,31 +13,21 @@ export default function NavTabs({
   onHideTopBar,
   radius = 1500,
   onRadiusChange,
-  userLocation,      // <-- פרופ חדש: מכיל את המיקום של המשתמש (אם קיים)
-  onSearchNearby,    // <-- פרופ חדש: הפונקציה שתפעיל את החיפוש
+  userLocation,
+  onSearchNearby,
 }) {
   const isMap = activeTab === "map";
-
-  // בדיקה האם המשתמש כבר הפעיל מיקום
   const hasLocation = !!userLocation;
 
   const radiusLabel = useMemo(() => {
     if (radius < 1000) return `${radius} מ׳`;
+
     const km = radius / 1000;
     return `${Number.isInteger(km) ? km : km.toFixed(1)} ק״מ`;
   }, [radius]);
 
-  // פונקציה שמטפלת בלחיצה על הכפתור החדש
   const handleSearchClick = () => {
     if (!hasLocation) return;
-    
-    // מכינים את ה-Flow והצינורות קדימה כפי שאביב ביקש
-    console.log("🚀 Radius Search Triggered:", {
-      radius: radius,
-      location: userLocation
-    });
-
-    // הפעלת הפונקציה שהתקבלה מאבא (App.jsx או TopBar)
     onSearchNearby?.(radius, userLocation);
   };
 
@@ -54,7 +44,9 @@ export default function NavTabs({
             aria-label="Main sections"
           >
             <span
-              className={`navtabs-indicator ${isMap ? "map-active" : "status-active"}`}
+              className={`navtabs-indicator ${
+                isMap ? "map-active" : "status-active"
+              }`}
               aria-hidden="true"
             />
 
@@ -87,18 +79,21 @@ export default function NavTabs({
               <div className="navtab-text">
                 <span className="navtab-title">Status Area</span>
                 <span className="navtab-subtitle">
-                  פיד אזורי, סטטוסים, סטורי וצ׳אט
+                  פיד אזורי וסטטוסים לידך
                 </span>
               </div>
 
-              <div className={`navtab-icon ${!isMap ? "active" : ""} status-mode`}>
+              <div
+                className={`navtab-icon ${
+                  !isMap ? "active" : ""
+                } status-mode`}
+              >
                 <MessageSquareText size={22} strokeWidth={2.2} />
               </div>
             </button>
           </div>
         </div>
 
-        {/* הוספנו קלאס דינמי של radius-disabled במידה ואין מיקום */}
         <div className={`radius-card ${!hasLocation ? "radius-disabled" : ""}`}>
           <div className="navtabs-glow navtabs-glow-blue" />
           <div className="navtabs-glow navtabs-glow-purple radius-glow-alt" />
@@ -110,9 +105,9 @@ export default function NavTabs({
               </div>
 
               <div>
-                <div className="radius-title">רדיוס חיפוש חכם</div>
+                <div className="radius-title">רדיוס חיפוש</div>
                 <div className="radius-subtitle">
-                  בחר כמה רחוק להציג אנשים, סטטוסים ותוכן
+                  בחר כמה רחוק להציג אנשים וסטטוסים
                 </div>
               </div>
             </div>
@@ -122,13 +117,14 @@ export default function NavTabs({
 
           <div className="radius-slider-wrap">
             <div className="radius-slider-glow" />
+
             <input
               type="range"
               min="200"
               max="5000"
               step="100"
               value={radius}
-              disabled={!hasLocation} // <-- חוסם את הסליידר אם אין מיקום
+              disabled={!hasLocation}
               onChange={(e) => onRadiusChange?.(Number(e.target.value))}
               aria-label="בחירת רדיוס"
               className="radius-slider"
@@ -142,11 +138,10 @@ export default function NavTabs({
             <span>5 ק״מ</span>
           </div>
 
-          {/* === הכפתור החדש: Radius Action === */}
           <div className="radius-action-wrap">
             <button
               type="button"
-              disabled={!hasLocation} // <-- חוסם את הכפתור אם אין מיקום
+              disabled={!hasLocation}
               onClick={handleSearchClick}
               className="radius-search-btn"
             >

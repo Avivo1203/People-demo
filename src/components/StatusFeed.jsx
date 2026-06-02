@@ -2,17 +2,6 @@ import React, { useMemo } from "react";
 import TimeAgo from "./TimeAgo";
 import { MessageCircle, MapPin, User, Send } from "lucide-react";
 
-/**
- * props:
- * - statuses: array of status objects
- * - comments: array of comment objects
- * - userLocation: { latitude, longitude } | null
- * - onOpenChat(nickname)
- * - onJumpToMap({lat, lng})
- * - onOpenProfile(status)
- * - onOpenStatus(status)
- */
-
 function getDistanceMeters(lat1, lon1, lat2, lon2) {
   if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
     return null;
@@ -59,7 +48,10 @@ export default function StatusFeed({
     const map = {};
 
     for (const comment of comments) {
-      if (!map[comment.statusId]) map[comment.statusId] = [];
+      if (!map[comment.statusId]) {
+        map[comment.statusId] = [];
+      }
+
       map[comment.statusId].push(comment);
     }
 
@@ -78,6 +70,7 @@ export default function StatusFeed({
         <div className="status-feed-empty-icon">
           <MessageCircle size={28} strokeWidth={2.2} />
         </div>
+
         <h3>אין עדיין סטטוסים באזור</h3>
         <p>פרסם סטטוס ראשון ותן למסך הזה להרגיש חי.</p>
       </div>
@@ -88,6 +81,7 @@ export default function StatusFeed({
     <div className="status-feed-grid">
       {recentStatuses.map((status) => {
         const nickname = status.nickname?.trim() || "אנונימי";
+        const firstLetter = nickname[0] || "א";
         const statusComments = commentsByStatus[status.id] || [];
         const latestComment = statusComments[0];
 
@@ -104,7 +98,7 @@ export default function StatusFeed({
         return (
           <article className="status-post-card" key={status.id}>
             <header className="status-post-head">
-              <div className="status-post-avatar">{nickname[0]}</div>
+              <div className="status-post-avatar">{firstLetter}</div>
 
               <div className="status-post-user">
                 <div className="status-post-topline">
@@ -124,23 +118,24 @@ export default function StatusFeed({
               </div>
             </header>
 
-            <div
+            <button
+              type="button"
               className="status-post-body"
               onClick={() => onOpenStatus?.(status)}
-              style={{ cursor: "pointer" }}
               title="פתח את הסטטוס"
             >
               <p className="status-post-text">{status.text}</p>
-            </div>
+            </button>
 
-            <div
+            <button
+              type="button"
               className="status-inline-reply"
               onClick={() => onOpenStatus?.(status)}
               title="הגב לסטטוס"
             >
               <MessageCircle size={17} strokeWidth={2.2} />
               <span>כתוב תגובה...</span>
-            </div>
+            </button>
 
             <div className="status-post-social-summary">
               <button
@@ -170,8 +165,6 @@ export default function StatusFeed({
                 <Send size={16} strokeWidth={2.2} />
                 <span>הגב</span>
               </button>
-
-            
 
               <button
                 type="button"

@@ -3,7 +3,6 @@ import {
   X,
   BadgeCheck,
   MapPin,
-  MessageCircle,
   Satellite,
   Pencil,
 } from "lucide-react";
@@ -38,9 +37,7 @@ export default function ProfileCard({ user, onClose, onEdit }) {
     safeUser.area?.trim() ||
     "אזור לא הוגדר";
 
-  const goodDeeds = safeUser.goodDeeds ?? 0;
   const statusCount = safeUser.statusCount ?? 0;
-  const storyCount = safeUser.storyCount ?? 0;
 
   return (
     <div className="profile-card-overlay" onClick={onClose}>
@@ -94,11 +91,6 @@ export default function ProfileCard({ user, onClose, onEdit }) {
               </span>
 
               <span className="profile-tag">
-                <MessageCircle size={14} strokeWidth={2.2} />
-                <span>פעיל באזור</span>
-              </span>
-
-              <span className="profile-tag">
                 <Satellite size={14} strokeWidth={2.2} />
                 <span>People Local</span>
               </span>
@@ -110,16 +102,6 @@ export default function ProfileCard({ user, onClose, onEdit }) {
           <div className="profile-stat-box">
             <strong>{statusCount}</strong>
             <span>סטטוסים</span>
-          </div>
-
-          <div className="profile-stat-box">
-            <strong>{storyCount}</strong>
-            <span>סטוריז</span>
-          </div>
-
-          <div className="profile-stat-box">
-            <strong>{goodDeeds}</strong>
-            <span>מעשים טובים</span>
           </div>
         </div>
 
@@ -139,7 +121,7 @@ export default function ProfileCard({ user, onClose, onEdit }) {
 
             <div className="profile-info-item">
               <span className="label">סטטוס אישי</span>
-              <strong>{safeUser.mood || "זמין לצ׳אט"}</strong>
+              <strong>{safeUser.mood || "זמין באזור"}</strong>
             </div>
 
             <div className="profile-info-item">

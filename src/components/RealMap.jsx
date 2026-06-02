@@ -7,8 +7,9 @@ import {
   Circle,
   useMap,
 } from "react-leaflet";
-import { MessageCircle, Search, X, Send } from "lucide-react";
+import { MessageCircle, Search, X, Send, Clock3 } from "lucide-react";
 import L from "leaflet";
+import TimeAgo from "./TimeAgo";
 import "leaflet/dist/leaflet.css";
 
 function FlyTo({ center, zoom = 14 }) {
@@ -52,19 +53,19 @@ function formatDistance(distanceM) {
 export default function RealMap({
   statuses = [],
   comments = [],
-  onOpenChat,
   onOpenStatus,
   userLocation,
   selectedPlace,
   radius = 1500,
-    nearbySearchTrigger,
-
+  nearbySearchTrigger,
 }) {
   const defaultCenter = useMemo(() => ({ lat: 32.0853, lng: 34.7818 }), []);
-const [center, setCenter] = useState(defaultCenter);
-const [selectedPoint, setSelectedPoint] = useState(null);
-const [nearby, setNearby] = useState([]);
-const [hasSearchedNearby, setHasSearchedNearby] = useState(false);
+
+  const [center, setCenter] = useState(defaultCenter);
+  const [selectedPoint, setSelectedPoint] = useState(null);
+  const [nearby, setNearby] = useState([]);
+  const [hasSearchedNearby, setHasSearchedNearby] = useState(false);
+
   const pulseIcon = useMemo(
     () =>
       L.divIcon({
@@ -101,35 +102,30 @@ const [hasSearchedNearby, setHasSearchedNearby] = useState(false);
     }
   }, [userLocation]);
 
-// מיקום שחיפשנו דרך SearchBar
-useEffect(() => {
-  if (selectedPlace?.lat && selectedPlace?.lng) {
-    const point = {
-      lat: selectedPlace.lat,
-      lng: selectedPlace.lng,
-    };
+  useEffect(() => {
+    if (selectedPlace?.lat && selectedPlace?.lng) {
+      setCenter({
+        lat: selectedPlace.lat,
+        lng: selectedPlace.lng,
+      });
+    }
+  }, [selectedPlace]);
 
-    // מזיז רק את המפה
-    // לא מחליף את המיקום האמיתי של המשתמש
-    setCenter(point);
-  }
-}, [selectedPlace]);
+  useEffect(() => {
+    if (!userLocation && !selectedPlace) {
+      setSelectedPoint(null);
+      setNearby([]);
+      setHasSearchedNearby(false);
+      setCenter(defaultCenter);
+    }
+  }, [userLocation, selectedPlace, defaultCenter]);
 
-// איפוס מלא של המפה כאשר עושים "אפס נתונים"
-useEffect(() => {
-  if (!userLocation && !selectedPlace) {
-    setSelectedPoint(null);
-    setNearby([]);
-    setHasSearchedNearby(false);
-    setCenter(defaultCenter);
-  }
-}, [userLocation, selectedPlace, defaultCenter]);
   const validStatuses = useMemo(() => {
     return statuses.filter(
-      (s) =>
-        s?.location &&
-        typeof s.location.lat === "number" &&
-        typeof s.location.lng === "number"
+      (status) =>
+        status?.location &&
+        typeof status.location.lat === "number" &&
+        typeof status.location.lng === "number"
     );
   }, [statuses]);
 
@@ -158,50 +154,46 @@ useEffect(() => {
     return map;
   }, [comments]);
 
- const handleFindPeople = useCallback(() => {
-  if (!selectedPoint) {
-    alert("קודם צריך להפעיל מיקום כדי לחפש אנשים סביבך");
-    return;
-  }
+  const handleFindPeople = useCallback(() => {
+    if (!selectedPoint) {
+      alert("קודם צריך להפעיל מיקום כדי לחפש אנשים סביבך");
+      return;
+    }
 
-  const results = validStatuses
-    .map((status) => {
-      const distance = haversineMeters(selectedPoint, {
-        lat: status.location.lat,
-        lng: status.location.lng,
-      });
+    const results = validStatuses
+      .map((status) => {
+        const distance = haversineMeters(selectedPoint, {
+          lat: status.location.lat,
+          lng: status.location.lng,
+        });
 
-      return {
-        ...status,
-        _distanceM: distance,
-      };
-    })
-    .filter((status) => status._distanceM <= radius)
-    .sort((a, b) => a._distanceM - b._distanceM);
+        return {
+          ...status,
+          _distanceM: distance,
+        };
+      })
+      .filter((status) => status._distanceM <= radius)
+      .sort((a, b) => a._distanceM - b._distanceM);
 
-  setNearby(results);
-  setHasSearchedNearby(true);
-  setCenter(selectedPoint);
-}, [selectedPoint, validStatuses, radius]);
-
-// מפעיל את החיפוש מהכפתור העליון של Search Nearby People
-useEffect(() => {
-  if (nearbySearchTrigger > 0) {
-    handleFindPeople();
-  }
-}, [nearbySearchTrigger, handleFindPeople]);
-const clearSelection = () => {
-  setNearby([]);
-  setHasSearchedNearby(false);
-
-  if (selectedPoint) {
+    setNearby(results);
+    setHasSearchedNearby(true);
     setCenter(selectedPoint);
-    return;
-  }
+  }, [selectedPoint, validStatuses, radius]);
 
-  setCenter(defaultCenter);
-};
-const displayedStatuses = hasSearchedNearby ? nearby : [];
+  useEffect(() => {
+    if (nearbySearchTrigger > 0) {
+      handleFindPeople();
+    }
+  }, [nearbySearchTrigger, handleFindPeople]);
+
+  const clearSelection = () => {
+    setNearby([]);
+    setHasSearchedNearby(false);
+    setCenter(selectedPoint || defaultCenter);
+  };
+
+  const displayedStatuses = hasSearchedNearby ? nearby : [];
+
   return (
     <div className="realmap-shell">
       <MapContainer
@@ -270,6 +262,11 @@ const displayedStatuses = hasSearchedNearby ? nearby : [];
                     {status.nickname || "משתמש"}
                   </strong>
 
+                  <div className="map-popup-time">
+                    <Clock3 size={13} strokeWidth={2.2} />
+                    <TimeAgo timestamp={status.timestamp} />
+                  </div>
+
                   <div className="map-popup-text">{status.text || "—"}</div>
 
                   {status._distanceM != null && (
@@ -298,14 +295,6 @@ const displayedStatuses = hasSearchedNearby ? nearby : [];
                       <Send size={15} strokeWidth={2.3} />
                       <span>הגב</span>
                     </button>
-
-                    <button
-                      className="map-cta secondary"
-                      onClick={() => onOpenChat?.(status.nickname || "משתמש")}
-                    >
-                      <MessageCircle size={15} strokeWidth={2.3} />
-                      <span>צ׳אט</span>
-                    </button>
                   </div>
                 </div>
               </Popup>
@@ -316,13 +305,10 @@ const displayedStatuses = hasSearchedNearby ? nearby : [];
 
       <div className="map-fab-panel">
         {selectedPoint ? (
-          <>
-            
-            <button className="map-fab" onClick={clearSelection}>
-              <X size={16} strokeWidth={2.2} />
-              <span>אפס חיפוש</span>
-            </button>
-          </>
+          <button className="map-fab" onClick={clearSelection}>
+            <X size={16} strokeWidth={2.2} />
+            <span>אפס חיפוש</span>
+          </button>
         ) : (
           <div className="map-hint">הפעל מיקום כדי לחפש אנשים סביבך</div>
         )}

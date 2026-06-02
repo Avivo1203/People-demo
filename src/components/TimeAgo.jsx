@@ -1,115 +1,53 @@
-import React, { useMemo } from "react";
-import TimeAgo from "./TimeAgo";
+import React from "react";
 
-/**
- * props:
- * - statuses: array of statuses (כולל media)
- * - onOpenChat(nickname)
- * - onJumpToMap({lat, lng})
- */
-export default function StoryGrid({
-  statuses = [],
-  onOpenChat,
-  onJumpToMap,
-}) {
-  const THIRTY_MIN_MS = 30 * 60 * 1000;
+export default function TimeAgo({ timestamp }) {
+  if (!timestamp) {
+    return <span>עכשיו</span>;
+  }
 
-  const storyItems = useMemo(() => {
-    return [...statuses]
-      .filter((status) => {
-        const hasMedia = !!status?.media?.url;
-        const isFresh =
-          status?.timestamp &&
-          new Date() - new Date(status.timestamp) < THIRTY_MIN_MS;
+  const date = new Date(timestamp);
+  const diffMs = Date.now() - date.getTime();
 
-        return hasMedia && isFresh;
-      })
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  }, [statuses]);
+  if (Number.isNaN(diffMs) || diffMs < 0) {
+    return <span>עכשיו</span>;
+  }
 
-  if (storyItems.length === 0) {
-    return (
-      <div className="story-empty-state">
-        <div className="story-empty-icon">📸</div>
-        <h3>אין סטוריז חדשים כרגע</h3>
-        <p>כשתוסיף תמונה או וידאו לסטטוס, זה יופיע כאן אוטומטית.</p>
-      </div>
-    );
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 30) {
+    return <span>עכשיו</span>;
+  }
+
+  if (seconds < 60) {
+    return <span>לפני פחות מדקה</span>;
+  }
+
+  if (minutes < 60) {
+    return <span>לפני {minutes} דקות</span>;
+  }
+
+  if (hours < 24) {
+    return <span>לפני {hours} שעות</span>;
+  }
+
+  if (days === 1) {
+    return <span>אתמול</span>;
+  }
+
+  if (days < 7) {
+    return <span>לפני {days} ימים</span>;
   }
 
   return (
-    <div className="story-section">
-      <div className="story-section-head">
-        <div>
-          <span className="story-section-eyebrow">Stories</span>
-          <h3>רגעים מהאזור שלך</h3>
-        </div>
-        <span className="story-section-count">{storyItems.length} פעילים</span>
-      </div>
-
-      <div className="story-grid">
-        {storyItems.map((story) => {
-          const nickname = story.nickname?.trim() || "אנונימי";
-          const isVideo = story.media?.type === "video";
-
-          return (
-            <article className="story-card" key={story.id}>
-              <div className="story-card-top">
-                <div className="story-user-chip">
-                  <div className="story-avatar">{nickname[0]}</div>
-                  <div className="story-user-meta">
-                    <strong>{nickname}</strong>
-                    <span>
-                      <TimeAgo timestamp={story.timestamp} />
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="story-media-frame">
-                {isVideo ? (
-                  <video
-                    src={story.media.url}
-                    controls
-                    preload="metadata"
-                    className="story-media-el"
-                  />
-                ) : (
-                  <img
-                    src={story.media.url}
-                    alt={`story-${nickname}`}
-                    className="story-media-el"
-                  />
-                )}
-              </div>
-
-              <div className="story-card-body">
-                <p className="story-caption">{story.text || "ללא טקסט"}</p>
-
-                <div className="story-actions">
-                  <button
-                    type="button"
-                    className="story-action-btn primary"
-                    onClick={() => onOpenChat?.(nickname)}
-                  >
-                    💬 צ׳אט
-                  </button>
-
-                  {story.location && (
-                    <button
-                      type="button"
-                      className="story-action-btn secondary"
-                      onClick={() => onJumpToMap?.(story.location)}
-                    >
-                      📍 למפה
-                    </button>
-                  )}
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </div>
+    <span>
+      {date.toLocaleDateString("he-IL", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })}
+    </span>
   );
 }
