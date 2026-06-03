@@ -15,8 +15,7 @@ import {
 import "./WelcomePage.css";
 
 // שימוש בנתיב יחסי - זה יעבוד אוטומטית גם במחשב וגם בנייד
-const API_URL = "";
-
+const API_URL = "http://localhost:5000";
 export default function WelcomePage({ onEnter, onGuestEnter }) {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({

@@ -120,15 +120,6 @@ export default function RealMap({
     }
   }, [userLocation, selectedPlace, defaultCenter]);
 
-  const validStatuses = useMemo(() => {
-    return statuses.filter(
-      (status) =>
-        status?.location &&
-        typeof status.location.lat === "number" &&
-        typeof status.location.lng === "number"
-    );
-  }, [statuses]);
-
   const commentsMetaByStatus = useMemo(() => {
     const map = {};
 
@@ -154,31 +145,78 @@ export default function RealMap({
     return map;
   }, [comments]);
 
-  const handleFindPeople = useCallback(() => {
+  const handleFindPeople = useCallback(async () => {
     if (!selectedPoint) {
       alert("קודם צריך להפעיל מיקום כדי לחפש אנשים סביבך");
       return;
     }
 
-    const results = validStatuses
-      .map((status) => {
-        const distance = haversineMeters(selectedPoint, {
-          lat: status.location.lat,
-          lng: status.location.lng,
-        });
+    try {
+      const token = localStorage.getItem("token");
 
-        return {
-          ...status,
-          _distanceM: distance,
-        };
-      })
-      .filter((status) => status._distanceM <= radius)
-      .sort((a, b) => a._distanceM - b._distanceM);
+      if (!token) {
+        alert("צריך להתחבר למשתמש כדי לחפש אנשים קרובים");
+        return;
+      }
 
-    setNearby(results);
-    setHasSearchedNearby(true);
-    setCenter(selectedPoint);
-  }, [selectedPoint, validStatuses, radius]);
+      const response = await fetch(
+        `http://localhost:5000/api/location/nearby?radius=${radius}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Find people failed:", data);
+        alert(data.message || "שגיאה בחיפוש אנשים קרובים");
+        return;
+      }
+
+      const mappedUsers = data
+        .filter((user) => user.lat != null && user.lng != null)
+        .map((user, index) => {
+          const distance = haversineMeters(selectedPoint, {
+            lat: user.lat,
+            lng: user.lng,
+          });
+
+          const visualDistance = 0.0025 + index * 0.0007;
+
+          return {
+            id: user.id || user.userId,
+            userId: user.userId,
+            nickname: user.username || "משתמש",
+            username: user.username || "משתמש",
+            firstName: user.firstName,
+            lastName: user.lastName,
+            text: "משתמש פעיל באזור",
+            timestamp: user.expiresAt || new Date().toISOString(),
+            privacyMode: user.privacyMode,
+            radius: user.radius,
+            location: {
+              lat: selectedPoint.lat + visualDistance,
+              lng: selectedPoint.lng + visualDistance,
+            },
+            _distanceM: distance,
+          };
+        })
+        .sort((a, b) => a._distanceM - b._distanceM);
+
+      console.log("Nearby users:", mappedUsers);
+
+      setNearby(mappedUsers);
+      setHasSearchedNearby(true);
+      setCenter(selectedPoint);
+    } catch (error) {
+      console.error("Find nearby error:", error);
+      alert("שגיאה בחיבור לשרת בזמן חיפוש אנשים");
+    }
+  }, [selectedPoint, radius]);
 
   useEffect(() => {
     if (nearbySearchTrigger > 0) {
@@ -252,7 +290,7 @@ export default function RealMap({
 
           return (
             <Marker
-              key={status.id || `${status.nickname}-${status.timestamp}`}
+              key={status.id || status.userId}
               position={[status.location.lat, status.location.lng]}
               icon={personIcon}
             >
@@ -267,11 +305,13 @@ export default function RealMap({
                     <TimeAgo timestamp={status.timestamp} />
                   </div>
 
-                  <div className="map-popup-text">{status.text || "—"}</div>
+                  <div className="map-popup-text">
+                    {status.text || "משתמש פעיל באזור"}
+                  </div>
 
                   {status._distanceM != null && (
                     <div className="map-popup-meta">
-                      מרחק: {formatDistance(status._distanceM)}
+                      מרחק אמיתי: {formatDistance(status._distanceM)}
                     </div>
                   )}
 
@@ -293,7 +333,7 @@ export default function RealMap({
                       onClick={() => onOpenStatus?.(status)}
                     >
                       <Send size={15} strokeWidth={2.3} />
-                      <span>הגב</span>
+                      <span>פתח</span>
                     </button>
                   </div>
                 </div>

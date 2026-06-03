@@ -148,16 +148,43 @@ export default function App() {
     localStorage.removeItem("comments");
   };
 
-  const updateUserLocation = (coords) => {
-    if (!coords) {
-      setUserLocation(null);
-      setSelectedPlace(null);
-      setNearbySearchTrigger(0);
-      return;
-    }
+ const updateUserLocation = async (coords) => {
+  if (!coords) {
+    setUserLocation(null);
+    setSelectedPlace(null);
+    setNearbySearchTrigger(0);
+    return;
+  }
 
-    setUserLocation(coords);
-  };
+  setUserLocation(coords);
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+      "http://localhost:5000/api/location/activate",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          lat: coords.latitude,
+          lng: coords.longitude,
+          radius,
+          privacyMode: "visible",
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    console.log("📍 Location activated:", data);
+  } catch (error) {
+    console.error("Location activate error:", error);
+  }
+};
 
   const enterApp = () => {
     localStorage.setItem("entered", "true");
