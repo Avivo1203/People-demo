@@ -4,6 +4,31 @@ const router = express.Router();
 const ActiveLocation = require("../models/ActiveLocation");
 const { protect } = require("../middleware/authMiddleware");
 
+const DEFAULT_RADIUS = 1500;
+const MAX_RADIUS = 5000;
+const LOCATION_TTL_MINUTES = 10;
+
+function isValidCoordinate(lat, lng) {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
+}
+
+function normalizeRadius(value) {
+  const radius = Number(value);
+
+  if (!Number.isFinite(radius) || radius <= 0) {
+    return DEFAULT_RADIUS;
+  }
+
+  return Math.min(radius, MAX_RADIUS);
+}
+
 router.post("/activate", protect, async (req, res) => {
   try {
     const { lat, lng, radius, privacyMode } = req.body;
@@ -12,7 +37,24 @@ router.post("/activate", protect, async (req, res) => {
       return res.status(400).json({ message: "חסר lat או lng" });
     }
 
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const cleanLat = Number(lat);
+    const cleanLng = Number(lng);
+
+    if (!isValidCoordinate(cleanLat, cleanLng)) {
+      return res.status(400).json({ message: "מיקום לא תקין" });
+    }
+
+    const cleanRadius = normalizeRadius(radius);
+    const cleanPrivacyMode = ["visible", "radiusOnly", "hidden"].includes(
+      privacyMode
+    )
+      ? privacyMode
+      : "visible";
+
+    const now = new Date();
+    const expiresAt = new Date(
+      now.getTime() + LOCATION_TTL_MINUTES * 60 * 1000
+    );
 
     const activeLocation = await ActiveLocation.findOneAndUpdate(
       { userId: req.userId },
@@ -20,10 +62,11 @@ router.post("/activate", protect, async (req, res) => {
         userId: req.userId,
         location: {
           type: "Point",
-          coordinates: [Number(lng), Number(lat)],
+          coordinates: [cleanLng, cleanLat],
         },
-        radius: Number(radius) || 1500,
-        privacyMode: privacyMode || "visible",
+        radius: cleanRadius,
+        privacyMode: cleanPrivacyMode,
+        lastSeen: now,
         expiresAt,
       },
       { new: true, upsert: true }
@@ -41,7 +84,7 @@ router.post("/activate", protect, async (req, res) => {
 
 router.get("/nearby", protect, async (req, res) => {
   try {
-    const radius = Number(req.query.radius) || 1500;
+    const radius = normalizeRadius(req.query.radius);
 
     const myLocation = await ActiveLocation.findOne({
       userId: req.userId,
@@ -79,6 +122,7 @@ router.get("/nearby", protect, async (req, res) => {
         lat: item.privacyMode === "visible" ? lat : null,
         lng: item.privacyMode === "visible" ? lng : null,
         radius: item.radius,
+        lastSeen: item.lastSeen,
         expiresAt: item.expiresAt,
       };
     });

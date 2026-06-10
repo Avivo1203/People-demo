@@ -32,6 +32,11 @@ const ActiveLocationSchema = new mongoose.Schema(
       default: "visible",
     },
 
+    lastSeen: {
+      type: Date,
+      default: Date.now,
+    },
+
     expiresAt: {
       type: Date,
       required: true,

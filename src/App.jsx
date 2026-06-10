@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import RealMap from "./components/RealMap";
 import StatusArea from "./components/StatusArea";
 import StatusDetails from "./components/StatusDetails";
@@ -9,6 +9,7 @@ import "./index.css";
 
 const STATUS_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_RADIUS = 1500;
+const API_BASE_URL = "http://localhost:5000";
 
 function loadFromStorage(key, fallback) {
   try {
@@ -26,6 +27,25 @@ function isStatusFresh(status) {
   if (Number.isNaN(createdAt)) return false;
 
   return Date.now() - createdAt < STATUS_LIFETIME_MS;
+}
+
+function mapAreaStatusFromApi(status) {
+  return {
+    id: status.id,
+    userId: status.userId,
+    nickname:
+      status.username ||
+      `${status.firstName || ""} ${status.lastName || ""}`.trim() ||
+      "משתמש",
+    text: status.text,
+    timestamp: status.createdAt,
+    createdAt: status.createdAt,
+    expiresAt: status.expiresAt,
+    location: {
+      lat: status.lat,
+      lng: status.lng,
+    },
+  };
 }
 
 export default function App() {
@@ -64,6 +84,35 @@ export default function App() {
   const [radius, setRadius] = useState(DEFAULT_RADIUS);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  const fetchNearbyStatuses = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) return;
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/status/nearby?radius=${radius}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Fetch nearby statuses failed:", data);
+        return;
+      }
+
+      const mappedStatuses = data.map(mapAreaStatusFromApi);
+      setStatuses(mappedStatuses);
+    } catch (error) {
+      console.error("Fetch nearby statuses error:", error);
+    }
+  }, [radius]);
+
   useEffect(() => {
     const freshStatuses = statuses.filter(isStatusFresh);
 
@@ -91,6 +140,12 @@ export default function App() {
     return () => clearInterval(cleanupInterval);
   }, []);
 
+  useEffect(() => {
+    if (entered && userLocation && activeTab === "status") {
+      fetchNearbyStatuses();
+    }
+  }, [entered, userLocation, activeTab, radius, fetchNearbyStatuses]);
+
   const filteredStatuses = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
 
@@ -108,13 +163,48 @@ export default function App() {
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }, [statuses, searchTerm]);
 
-  const addStatus = (newStatus) => {
-    setStatuses((prev) => [newStatus, ...prev]);
+  const addStatus = async (newStatus) => {
+    try {
+      const token = localStorage.getItem("token");
 
-    setCurrentUser((prev) => ({
-      ...prev,
-      statusCount: (prev.statusCount || 0) + 1,
-    }));
+      if (!token) {
+        alert("צריך להתחבר כדי לפרסם סטטוס");
+        return;
+      }
+
+      if (!userLocation) {
+        alert("צריך להפעיל מיקום לפני פרסום סטטוס");
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          text: newStatus.text,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "שגיאה בפרסום סטטוס");
+        return;
+      }
+
+      await fetchNearbyStatuses();
+
+      setCurrentUser((prev) => ({
+        ...prev,
+        statusCount: (prev.statusCount || 0) + 1,
+      }));
+    } catch (error) {
+      console.error("Add status error:", error);
+      alert("שגיאה בחיבור לשרת בזמן פרסום סטטוס");
+    }
   };
 
   const addComment = (statusId, text) => {
@@ -148,22 +238,20 @@ export default function App() {
     localStorage.removeItem("comments");
   };
 
- const updateUserLocation = async (coords) => {
-  if (!coords) {
-    setUserLocation(null);
-    setSelectedPlace(null);
-    setNearbySearchTrigger(0);
-    return;
-  }
+  const updateUserLocation = async (coords) => {
+    if (!coords) {
+      setUserLocation(null);
+      setSelectedPlace(null);
+      setNearbySearchTrigger(0);
+      return;
+    }
 
-  setUserLocation(coords);
+    setUserLocation(coords);
 
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    const response = await fetch(
-      "http://localhost:5000/api/location/activate",
-      {
+      const response = await fetch(`${API_BASE_URL}/api/location/activate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -175,16 +263,20 @@ export default function App() {
           radius,
           privacyMode: "visible",
         }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Location activate failed:", data);
+        return;
       }
-    );
 
-    const data = await response.json();
-
-    console.log("📍 Location activated:", data);
-  } catch (error) {
-    console.error("Location activate error:", error);
-  }
-};
+      console.log("📍 Location activated:", data);
+    } catch (error) {
+      console.error("Location activate error:", error);
+    }
+  };
 
   const enterApp = () => {
     localStorage.setItem("entered", "true");
@@ -231,18 +323,7 @@ export default function App() {
       return;
     }
 
-    const testStatusNearMe = {
-      id: Date.now(),
-      nickname: "בדיקה",
-      text: "אני סטטוס בדיקה ליד המיקום שלך",
-      timestamp: new Date().toISOString(),
-      location: {
-        lat: userLocation.latitude + 0.001,
-        lng: userLocation.longitude + 0.001,
-      },
-    };
-
-    setStatuses((prev) => [testStatusNearMe, ...prev]);
+    fetchNearbyStatuses();
     setActiveTab("map");
     setShowTopBar(true);
     setNearbySearchTrigger((prev) => prev + 1);

@@ -7,7 +7,7 @@ import {
   Circle,
   useMap,
 } from "react-leaflet";
-import { MessageCircle, Search, X, Send, Clock3 } from "lucide-react";
+import { X, Clock3, MapPin, Search } from "lucide-react";
 import L from "leaflet";
 import TimeAgo from "./TimeAgo";
 import "leaflet/dist/leaflet.css";
@@ -24,46 +24,56 @@ function FlyTo({ center, zoom = 14 }) {
   return null;
 }
 
-function haversineMeters(a, b) {
-  const toRad = (d) => (d * Math.PI) / 180;
-  const R = 6371000;
+function getDistanceMeters(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
+    return null;
+  }
 
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
+  const R = 6371e3;
+  const phi1 = (lat1 * Math.PI) / 180;
+  const phi2 = (lat2 * Math.PI) / 180;
+  const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+  const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
 
-  const x =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1) *
-      Math.cos(lat2) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
+  const a =
+    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+    Math.cos(phi1) *
+      Math.cos(phi2) *
+      Math.sin(deltaLambda / 2) *
+      Math.sin(deltaLambda / 2);
 
-  const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-  return R * c;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
 }
 
 function formatDistance(distanceM) {
   if (distanceM == null) return "לא ידוע";
-  if (distanceM < 1000) return `${Math.round(distanceM)} מטר`;
+  if (distanceM < 1000) return `${distanceM} מטר`;
   return `${(distanceM / 1000).toFixed(2)} ק״מ`;
 }
 
+function getSafeDisplayLocation(lat, lng, index = 0) {
+  const safeOffset = 0.0015 + index * 0.00035;
+  const angle = index * 137.5;
+  const angleRad = (angle * Math.PI) / 180;
+
+  return {
+    lat: lat + Math.cos(angleRad) * safeOffset,
+    lng: lng + Math.sin(angleRad) * safeOffset,
+  };
+}
+
 export default function RealMap({
-  statuses = [],
-  comments = [],
-  onOpenStatus,
   userLocation,
   selectedPlace,
   radius = 1500,
-  nearbySearchTrigger,
+  nearbySearchTrigger = 0,
 }) {
   const defaultCenter = useMemo(() => ({ lat: 32.0853, lng: 34.7818 }), []);
 
   const [center, setCenter] = useState(defaultCenter);
   const [selectedPoint, setSelectedPoint] = useState(null);
-  const [nearby, setNearby] = useState([]);
+  const [nearbyPeople, setNearbyPeople] = useState([]);
   const [hasSearchedNearby, setHasSearchedNearby] = useState(false);
 
   const pulseIcon = useMemo(
@@ -97,7 +107,7 @@ export default function RealMap({
 
       setSelectedPoint(point);
       setCenter(point);
-      setNearby([]);
+      setNearbyPeople([]);
       setHasSearchedNearby(false);
     }
   }, [userLocation]);
@@ -114,36 +124,11 @@ export default function RealMap({
   useEffect(() => {
     if (!userLocation && !selectedPlace) {
       setSelectedPoint(null);
-      setNearby([]);
-      setHasSearchedNearby(false);
       setCenter(defaultCenter);
+      setNearbyPeople([]);
+      setHasSearchedNearby(false);
     }
   }, [userLocation, selectedPlace, defaultCenter]);
-
-  const commentsMetaByStatus = useMemo(() => {
-    const map = {};
-
-    for (const comment of comments) {
-      if (!map[comment.statusId]) {
-        map[comment.statusId] = {
-          count: 0,
-          latest: null,
-        };
-      }
-
-      map[comment.statusId].count += 1;
-
-      if (
-        !map[comment.statusId].latest ||
-        new Date(comment.timestamp) >
-          new Date(map[comment.statusId].latest.timestamp)
-      ) {
-        map[comment.statusId].latest = comment;
-      }
-    }
-
-    return map;
-  }, [comments]);
 
   const handleFindPeople = useCallback(async () => {
     if (!selectedPoint) {
@@ -177,15 +162,17 @@ export default function RealMap({
         return;
       }
 
-      const mappedUsers = data
+      const mappedPeople = data
         .filter((user) => user.lat != null && user.lng != null)
         .map((user, index) => {
-          const distance = haversineMeters(selectedPoint, {
-            lat: user.lat,
-            lng: user.lng,
-          });
+          const distance = getDistanceMeters(
+            selectedPoint.lat,
+            selectedPoint.lng,
+            user.lat,
+            user.lng
+          );
 
-          const visualDistance = 0.0025 + index * 0.0007;
+          const safeLocation = getSafeDisplayLocation(user.lat, user.lng, index);
 
           return {
             id: user.id || user.userId,
@@ -198,18 +185,16 @@ export default function RealMap({
             timestamp: user.expiresAt || new Date().toISOString(),
             privacyMode: user.privacyMode,
             radius: user.radius,
-            location: {
-              lat: selectedPoint.lat + visualDistance,
-              lng: selectedPoint.lng + visualDistance,
+            realLocation: {
+              lat: user.lat,
+              lng: user.lng,
             },
+            location: safeLocation,
             _distanceM: distance,
           };
-        })
-        .sort((a, b) => a._distanceM - b._distanceM);
+        });
 
-      console.log("Nearby users:", mappedUsers);
-
-      setNearby(mappedUsers);
+      setNearbyPeople(mappedPeople);
       setHasSearchedNearby(true);
       setCenter(selectedPoint);
     } catch (error) {
@@ -225,12 +210,10 @@ export default function RealMap({
   }, [nearbySearchTrigger, handleFindPeople]);
 
   const clearSelection = () => {
-    setNearby([]);
+    setNearbyPeople([]);
     setHasSearchedNearby(false);
     setCenter(selectedPoint || defaultCenter);
   };
-
-  const displayedStatuses = hasSearchedNearby ? nearby : [];
 
   return (
     <div className="realmap-shell">
@@ -265,7 +248,7 @@ export default function RealMap({
 
                   <button className="map-cta" onClick={handleFindPeople}>
                     <Search size={15} strokeWidth={2.3} />
-                    <span>חפש אנשים קרובים</span>
+                    <span>Explore Nearby People</span>
                   </button>
                 </div>
               </Popup>
@@ -282,65 +265,38 @@ export default function RealMap({
           </>
         )}
 
-        {displayedStatuses.map((status) => {
-          const commentMeta = commentsMetaByStatus[status.id] || {
-            count: 0,
-            latest: null,
-          };
-
-          return (
+        {hasSearchedNearby &&
+          nearbyPeople.map((person) => (
             <Marker
-              key={status.id || status.userId}
-              position={[status.location.lat, status.location.lng]}
+              key={`person-${person.id || person.userId}`}
+              position={[person.location.lat, person.location.lng]}
               icon={personIcon}
             >
               <Popup>
                 <div className="map-popup-card">
                   <strong className="map-popup-title">
-                    {status.nickname || "משתמש"}
+                    {person.nickname || "משתמש"}
                   </strong>
 
                   <div className="map-popup-time">
                     <Clock3 size={13} strokeWidth={2.2} />
-                    <TimeAgo timestamp={status.timestamp} />
+                    <TimeAgo timestamp={person.timestamp} />
                   </div>
 
                   <div className="map-popup-text">
-                    {status.text || "משתמש פעיל באזור"}
+                    {person.text || "משתמש פעיל באזור"}
                   </div>
 
-                  {status._distanceM != null && (
+                  {person._distanceM != null && (
                     <div className="map-popup-meta">
-                      מרחק אמיתי: {formatDistance(status._distanceM)}
+                      <MapPin size={13} strokeWidth={2.2} />
+                      <span>מרחק משוער: {formatDistance(person._distanceM)}</span>
                     </div>
                   )}
-
-                  <div className="map-popup-comment-chip">
-                    <MessageCircle size={14} strokeWidth={2.2} />
-                    <span>{commentMeta.count} תגובות</span>
-                  </div>
-
-                  {commentMeta.latest && (
-                    <div className="map-popup-last-comment">
-                      <strong>{commentMeta.latest.nickname}:</strong>
-                      <span>{commentMeta.latest.text}</span>
-                    </div>
-                  )}
-
-                  <div className="map-popup-actions">
-                    <button
-                      className="map-cta"
-                      onClick={() => onOpenStatus?.(status)}
-                    >
-                      <Send size={15} strokeWidth={2.3} />
-                      <span>פתח</span>
-                    </button>
-                  </div>
                 </div>
               </Popup>
             </Marker>
-          );
-        })}
+          ))}
       </MapContainer>
 
       <div className="map-fab-panel">
