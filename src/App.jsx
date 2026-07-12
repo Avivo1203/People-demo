@@ -24,6 +24,7 @@ function isStatusFresh(status) {
   if (!status?.timestamp) return false;
 
   const createdAt = new Date(status.timestamp).getTime();
+
   if (Number.isNaN(createdAt)) return false;
 
   return Date.now() - createdAt < STATUS_LIFETIME_MS;
@@ -33,18 +34,37 @@ function mapAreaStatusFromApi(status) {
   return {
     id: status.id,
     userId: status.userId,
+
     nickname:
       status.username ||
       `${status.firstName || ""} ${status.lastName || ""}`.trim() ||
       "משתמש",
+
     text: status.text,
     timestamp: status.createdAt,
     createdAt: status.createdAt,
     expiresAt: status.expiresAt,
+
     location: {
       lat: status.lat,
       lng: status.lng,
     },
+  };
+}
+
+function mapCommentFromApi(comment) {
+  return {
+    id: comment.id,
+    statusId: comment.statusId,
+
+    nickname:
+      comment.username ||
+      `${comment.firstName || ""} ${comment.lastName || ""}`.trim() ||
+      "משתמש",
+
+    text: comment.text,
+    timestamp: comment.createdAt,
+    createdAt: comment.createdAt,
   };
 }
 
@@ -83,6 +103,63 @@ export default function App() {
   const [showTopBar, setShowTopBar] = useState(true);
   const [radius, setRadius] = useState(DEFAULT_RADIUS);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isRefreshingArea, setIsRefreshingArea] = useState(false);
+
+
+  const fetchCommentsForStatuses = useCallback(async (statusList) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token || !Array.isArray(statusList)) {
+        return;
+      }
+
+      if (statusList.length === 0) {
+        setComments([]);
+        return;
+      }
+
+      const commentRequests = statusList.map(async (status) => {
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/api/comments/status/${status.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            console.error(
+              `Fetch comments failed for status ${status.id}:`,
+              data
+            );
+
+            return [];
+          }
+
+          return data.map(mapCommentFromApi);
+        } catch (error) {
+          console.error(
+            `Fetch comments error for status ${status.id}:`,
+            error
+          );
+
+          return [];
+        }
+      });
+
+      const commentsGroups = await Promise.all(commentRequests);
+      const allComments = commentsGroups.flat();
+
+      setComments(allComments);
+    } catch (error) {
+      console.error("Fetch comments for statuses error:", error);
+    }
+  }, []);
 
   const fetchNearbyStatuses = useCallback(async () => {
     try {
@@ -107,11 +184,14 @@ export default function App() {
       }
 
       const mappedStatuses = data.map(mapAreaStatusFromApi);
+
       setStatuses(mappedStatuses);
+
+      await fetchCommentsForStatuses(mappedStatuses);
     } catch (error) {
       console.error("Fetch nearby statuses error:", error);
     }
-  }, [radius]);
+  }, [radius, fetchCommentsForStatuses]);
 
   useEffect(() => {
     const freshStatuses = statuses.filter(isStatusFresh);
@@ -179,10 +259,12 @@ export default function App() {
 
       const response = await fetch(`${API_BASE_URL}/api/status`, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+
         body: JSON.stringify({
           text: newStatus.text,
         }),
@@ -207,19 +289,47 @@ export default function App() {
     }
   };
 
-  const addComment = (statusId, text) => {
+  const addComment = async (statusId, text) => {
     const cleanText = text.trim();
+
     if (!cleanText) return;
 
-    const newComment = {
-      id: Date.now(),
-      statusId,
-      nickname: currentUser?.nickname || "אני",
-      text: cleanText,
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      const token = localStorage.getItem("token");
 
-    setComments((prev) => [newComment, ...prev]);
+      if (!token) {
+        alert("צריך להתחבר כדי להגיב");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/comments/${statusId}`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+
+          body: JSON.stringify({
+            text: cleanText,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "שגיאה בשליחת התגובה");
+        return;
+      }
+
+      await fetchCommentsForStatuses(statuses);
+    } catch (error) {
+      console.error("Add comment error:", error);
+      alert("שגיאה בחיבור לשרת בזמן שליחת התגובה");
+    }
   };
 
   const clearStatuses = () => {
@@ -253,10 +363,12 @@ export default function App() {
 
       const response = await fetch(`${API_BASE_URL}/api/location/activate`, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+
         body: JSON.stringify({
           lat: coords.latitude,
           lng: coords.longitude,
@@ -339,7 +451,27 @@ export default function App() {
 
     setIsProfileOpen(true);
   };
+  const refreshAreaData = async () => {
+  if (!userLocation) {
+    alert("צריך להפעיל מיקום לפני רענון האזור");
+    return;
+  }
 
+  if (isRefreshingArea) return;
+
+  setIsRefreshingArea(true);
+
+  try {
+    await fetchNearbyStatuses();
+
+    setNearbySearchTrigger((prev) => prev + 1);
+  } catch (error) {
+    console.error("Refresh area data error:", error);
+    alert("לא הצלחנו לרענן את נתוני האזור");
+  } finally {
+    setIsRefreshingArea(false);
+  }
+};
   const mapCenterKey = userLocation
     ? `${Number(userLocation.latitude).toFixed(5)},${Number(
         userLocation.longitude
@@ -368,6 +500,9 @@ export default function App() {
           onOpenProfile={() => setIsProfileOpen(true)}
           userLocation={userLocation}
           onSearchNearby={handleSearchNearby}
+          onRefreshArea={refreshAreaData}
+          isRefreshingArea={isRefreshingArea}
+          
         />
       )}
 
@@ -411,7 +546,8 @@ export default function App() {
         <StatusDetails
           status={selectedStatus}
           comments={comments.filter(
-            (comment) => comment.statusId === selectedStatus.id
+            (comment) =>
+              String(comment.statusId) === String(selectedStatus.id)
           )}
           onAddComment={addComment}
           onClose={() => setSelectedStatus(null)}

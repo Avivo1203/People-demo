@@ -14,18 +14,26 @@ export default function StatusForm({ onAddStatus, userLocation }) {
   const fileInputRef = useRef(null);
 
   const currentUser = useMemo(() => {
-    try {
-      const raw = localStorage.getItem("currentUser");
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  }, []);
+  try {
+    const raw =
+      localStorage.getItem("user") ||
+      localStorage.getItem("currentUser");
 
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}, []);
   const displayNickname = useMemo(() => {
+    const fullName = `${currentUser?.firstName || ""} ${
+      currentUser?.lastName || ""
+    }`.trim();
+
     return (
+      currentUser?.username?.trim() ||
       currentUser?.nickname?.trim() ||
       currentUser?.fullName?.trim() ||
+      fullName ||
       "אנונימי"
     );
   }, [currentUser]);

@@ -20,15 +20,17 @@ app.use(express.json());
 const authRoutes = require("./routes/authRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 const statusRoutes = require("./routes/statusRoutes");
+const commentRoutes = require("./routes/commentRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/location", locationRoutes);
 app.use("/api/status", statusRoutes);
+app.use("/api/comments", commentRoutes);
 
-// 1. הגשת קבצים סטטיים (JS, CSS וכו') מתוך dist
+// הגשת קבצים סטטיים מתוך dist
 app.use(express.static(path.join(__dirname, "dist")));
 
-// 2. Middleware שמעביר כל בקשה שאינה API לתוך ה-React
+// כל בקשה שאינה API עוברת ל-React
 app.use((req, res, next) => {
   if (!req.path.startsWith("/api")) {
     res.sendFile(path.join(__dirname, "dist", "index.html"));
@@ -41,9 +43,11 @@ const PORT = process.env.PORT || 5000;
 
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() =>
-    app.listen(PORT, () => console.log(`🚀 Server running on ${PORT}`))
-  )
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on ${PORT}`);
+    });
+  })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err);
     process.exit(1);

@@ -6,6 +6,7 @@ import {
   LoaderCircle,
   Trash2,
   LogOut,
+  RefreshCw,
 } from "lucide-react";
 
 import NavTabs from "./NavTabs";
@@ -25,15 +26,17 @@ export default function TopBar({
   onPlaceSelect,
   onHideTopBar,
   onOpenProfile,
-  onSearchNearby, // <-- פרופ חדש: כדי שנוכל להעביר אותו הלאה לאבא הגדול (App.jsx)
+  onSearchNearby,
+  onRefreshArea,
+  isRefreshingArea,
 }) {
   const [isLocating, setIsLocating] = useState(false);
 
   // מצב שמראה אם המשתמש כבר הפעיל מיקום
   const [locationEnabled, setLocationEnabled] = useState(false);
-  
-  // <-- סטייט חדש: שומר את הקואורדינטות האמיתיות בשביל ה-Flow של הרדיוס
-  const [userLocation, setUserLocation] = useState(null); 
+
+  // שומר את הקואורדינטות האמיתיות בשביל ה-Flow של הרדיוס
+  const [userLocation, setUserLocation] = useState(null);
 
   const [user, setUser] = useState(null);
 
@@ -96,7 +99,7 @@ export default function TopBar({
         // שולח למעלה לאבא אם צריך
         onGetLocation?.(coords);
 
-        // <-- שומר מקומית את המיקום כדי להעביר ל-NavTabs
+        // שומר מקומית את המיקום כדי להעביר ל-NavTabs
         setUserLocation(coords);
 
         // מצב שהמיקום הופעל בהצלחה
@@ -128,26 +131,21 @@ export default function TopBar({
   return (
     <div
       className={`topbar-shell ${
-        isStatusTab
-          ? "topbar-shell-status"
-          : "topbar-shell-map"
+        isStatusTab ? "topbar-shell-status" : "topbar-shell-map"
       }`}
     >
       <div className="topbar-stack">
-
-        {/* עדכנו את ה-Props של NavTabs כאן למטה */}
         <NavTabs
           activeTab={activeTab}
           onChangeTab={setActiveTab}
           radius={radius}
           onRadiusChange={setRadius}
           onHideTopBar={onHideTopBar}
-          userLocation={userLocation}       
-          onSearchNearby={handleSearchNearby}  
+          userLocation={userLocation}
+          onSearchNearby={handleSearchNearby}
         />
 
         <div className="topbar-row">
-
           <SearchBar
             searchTerm={searchTerm}
             onSearchChange={onSearchChange}
@@ -156,7 +154,6 @@ export default function TopBar({
           />
 
           <div className="topbar-actions">
-
             {/* פרופיל */}
             <button
               type="button"
@@ -165,6 +162,27 @@ export default function TopBar({
               className="topbar-action-btn profile"
             >
               <User size={19} strokeWidth={2.3} />
+            </button>
+
+            {/* רענון כל נתוני האזור */}
+            <button
+              type="button"
+              onClick={onRefreshArea}
+              disabled={isRefreshingArea}
+              title={
+                isRefreshingArea
+                  ? "מרענן את נתוני האזור..."
+                  : "רענן אנשים, סטטוסים ותגובות"
+              }
+              className={`topbar-action-btn ${
+                isRefreshingArea ? "disabled" : ""
+              }`}
+            >
+              <RefreshCw
+                size={19}
+                strokeWidth={2.3}
+                className={isRefreshingArea ? "spin" : ""}
+              />
             </button>
 
             {/* משתמש מחובר / אורח */}
@@ -193,11 +211,9 @@ export default function TopBar({
                       borderRadius: "50%",
                       backgroundColor: "#48bb78",
                     }}
-                  ></span>
+                  />
 
-                  <span>
-                    מחובר כ־{getUserDisplayName()}
-                  </span>
+                  <span>מחובר כ־{getUserDisplayName()}</span>
                 </div>
 
                 <button
@@ -235,9 +251,7 @@ export default function TopBar({
               }
               className={`topbar-action-btn ${
                 isLocating ? "disabled" : ""
-              } ${
-                locationEnabled ? "active-location" : ""
-              }`}
+              } ${locationEnabled ? "active-location" : ""}`}
             >
               {isLocating ? (
                 <LoaderCircle
@@ -246,10 +260,7 @@ export default function TopBar({
                   className="spin"
                 />
               ) : (
-                <MapPinned
-                  size={19}
-                  strokeWidth={2.3}
-                />
+                <MapPinned size={19} strokeWidth={2.3} />
               )}
             </button>
 
@@ -262,7 +273,6 @@ export default function TopBar({
             >
               <Trash2 size={19} strokeWidth={2.3} />
             </button>
-
           </div>
         </div>
       </div>
