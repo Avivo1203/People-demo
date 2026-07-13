@@ -483,28 +483,31 @@ export default function App() {
   }
 
   return (
-    <div className="app-container" dir="rtl">
-      {showTopBar && (
-        <TopBar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          radius={radius}
-          setRadius={setRadius}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onGoHome={goHome}
-          onClear={clearStatuses}
-          onGetLocation={updateUserLocation}
-          onPlaceSelect={handlePlaceSelect}
-          onHideTopBar={() => setShowTopBar(false)}
-          onOpenProfile={() => setIsProfileOpen(true)}
-          userLocation={userLocation}
-          onSearchNearby={handleSearchNearby}
-          onRefreshArea={refreshAreaData}
-          isRefreshingArea={isRefreshingArea}
-          
-        />
-      )}
+   <div className="app-container" dir="rtl">
+  {showTopBar && (
+    <TopBar
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      radius={radius}
+      setRadius={setRadius}
+      searchTerm={searchTerm}
+      onSearchChange={setSearchTerm}
+      onGoHome={goHome}
+      onClear={clearStatuses}
+      onGetLocation={updateUserLocation}
+      onPlaceSelect={handlePlaceSelect}
+      onHideTopBar={() => setShowTopBar(false)}
+      onOpenProfile={() => setIsProfileOpen(true)}
+      userLocation={userLocation}
+      onSearchNearby={handleSearchNearby}
+      onRefreshArea={refreshAreaData}
+      isRefreshingArea={isRefreshingArea}
+      onOpenStatusArea={() => {
+        setActiveTab("status");
+        setShowTopBar(true);
+      }}
+    />
+  )}
 
       {isProfileOpen && (
         <ProfileCard

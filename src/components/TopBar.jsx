@@ -7,6 +7,7 @@ import {
   Trash2,
   LogOut,
   RefreshCw,
+  Newspaper,
 } from "lucide-react";
 
 import NavTabs from "./NavTabs";
@@ -29,6 +30,7 @@ export default function TopBar({
   onSearchNearby,
   onRefreshArea,
   isRefreshingArea,
+  onOpenStatusArea,
 }) {
   const [isLocating, setIsLocating] = useState(false);
 
@@ -96,15 +98,10 @@ export default function TopBar({
           longitude: pos.coords.longitude,
         };
 
-        // שולח למעלה לאבא אם צריך
         onGetLocation?.(coords);
 
-        // שומר מקומית את המיקום כדי להעביר ל-NavTabs
         setUserLocation(coords);
-
-        // מצב שהמיקום הופעל בהצלחה
         setLocationEnabled(true);
-
         setIsLocating(false);
       },
 
@@ -167,7 +164,7 @@ export default function TopBar({
             {/* רענון כל נתוני האזור */}
             <button
               type="button"
-              onClick={onRefreshArea}
+              onClick={() => onRefreshArea?.()}
               disabled={isRefreshingArea}
               title={
                 isRefreshingArea
@@ -183,6 +180,18 @@ export default function TopBar({
                 strokeWidth={2.3}
                 className={isRefreshingArea ? "spin" : ""}
               />
+            </button>
+
+            {/* מעבר ל-Status Area */}
+            <button
+              type="button"
+              onClick={() => onOpenStatusArea?.()}
+              title="סטטוסים באזור"
+              className={`topbar-action-btn ${
+                isStatusTab ? "active" : ""
+              }`}
+            >
+              <Newspaper size={19} strokeWidth={2.3} />
             </button>
 
             {/* משתמש מחובר / אורח */}
