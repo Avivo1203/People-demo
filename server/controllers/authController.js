@@ -121,7 +121,7 @@ const login = async (req, res) => {
         message: "פרטי ההתחברות אינם נכונים",
       });
     }
-
+     
     // 3. השוואת הסיסמה שהוקלדה עם הסיסמה המוצפנת ב-DB
     const isMatch = await bcrypt.compare(password, user.password);
 
