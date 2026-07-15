@@ -15,7 +15,7 @@ import {
 import "./WelcomePage.css";
 
 // שימוש בנתיב יחסי - זה יעבוד אוטומטית גם במחשב וגם בנייד
-const API_URL = "http://localhost:5000";
+const API_URL = "https://people-demo.onrender.com";
 export default function WelcomePage({ onEnter, onGuestEnter }) {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({

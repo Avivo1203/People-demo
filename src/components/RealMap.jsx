@@ -145,7 +145,7 @@ export default function RealMap({
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/location/nearby?radius=${radius}`,
+        `https://people-demo.onrender.com/api/location/nearby?radius=${radius}`,
         {
           method: "GET",
           headers: {
