@@ -1,3 +1,4 @@
+import peopleLogo from "./assets/people-logo.png";
 import React, { useMemo, useState } from "react";
 import {
   Mail,
@@ -11,13 +12,21 @@ import {
   HeartHandshake,
   BadgeCheck,
   Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
 import "./WelcomePage.css";
 
-// שימוש בנתיב יחסי - זה יעבוד אוטומטית גם במחשב וגם בנייד
 const API_URL = "https://people-demo.onrender.com";
+
 export default function WelcomePage({ onEnter, onGuestEnter }) {
-  const [mode, setMode] = useState("login");
+  const resetToken = useMemo(
+    () => new URLSearchParams(window.location.search).get("resetToken"),
+    []
+  );
+
+  const [mode, setMode] = useState(resetToken ? "reset" : "login");
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -26,9 +35,14 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
     password: "",
     loginIdentifier: "",
     loginPassword: "",
+    forgotEmail: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const featureItems = useMemo(
     () => [
@@ -57,6 +71,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
   const handleModeChange = (nextMode) => {
     setMode(nextMode);
     setError("");
+    setSuccess("");
   };
 
   const onChange = (e) => {
@@ -68,6 +83,17 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
     }));
 
     if (error) setError("");
+    if (success) setSuccess("");
+  };
+
+  const readResponse = async (response) => {
+    const contentType = response.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      return response.json();
+    }
+
+    return { message: "התקבלה תשובה לא תקינה מהשרת." };
   };
 
   const handleRegister = async (e) => {
@@ -94,6 +120,8 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
@@ -109,7 +137,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
         }),
       });
 
-      const data = await response.json();
+      const data = await readResponse(response);
 
       if (!response.ok) {
         setError(data.message || "שגיאה בהרשמה.");
@@ -122,9 +150,11 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
       localStorage.setItem("guest", "false");
 
       onEnter();
-} catch (err) {
-  setError("משהו השתבש, אנא נסה שוב בעוד רגע.");
-}
+    } catch (err) {
+      setError("משהו השתבש, אנא נסה שוב בעוד רגע.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogin = async (e) => {
@@ -138,6 +168,8 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
@@ -150,7 +182,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
         }),
       });
 
-      const data = await response.json();
+      const data = await readResponse(response);
 
       if (!response.ok) {
         setError(data.message || "פרטי ההתחברות אינם נכונים.");
@@ -165,7 +197,148 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
       onEnter();
     } catch (err) {
       setError("שגיאה בחיבור לשרת. בדוק שה־Backend פועל.");
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+
+    const email = form.forgotEmail.trim().toLowerCase();
+
+    if (!email) {
+      setError("נא להזין כתובת אימייל.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await readResponse(response);
+
+      if (!response.ok) {
+        setError(data.message || "לא ניתן לשלוח כרגע קישור לאיפוס.");
+        return;
+      }
+
+      setSuccess(
+        data.message ||
+          "אם כתובת האימייל קיימת במערכת, נשלח אליה קישור לאיפוס הסיסמה."
+      );
+    } catch (err) {
+      setError("שגיאה בחיבור לשרת. נסה שוב בעוד רגע.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+
+    const password = form.newPassword.trim();
+    const confirmPassword = form.confirmPassword.trim();
+
+    if (!resetToken) {
+      setError("קישור האיפוס אינו תקין.");
+      return;
+    }
+
+    if (!password || !confirmPassword) {
+      setError("נא למלא את שתי שורות הסיסמה.");
+      return;
+    }
+
+    if (password.length < 4) {
+      setError("הסיסמה חייבת להיות באורך של 4 תווים לפחות.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("הסיסמאות אינן תואמות.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: resetToken,
+          password,
+          confirmPassword,
+        }),
+      });
+
+      const data = await readResponse(response);
+
+      if (!response.ok) {
+        setError(data.message || "לא ניתן לעדכן את הסיסמה.");
+        return;
+      }
+
+      setSuccess(data.message || "הסיסמה עודכנה בהצלחה.");
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      setForm((prev) => ({
+        ...prev,
+        newPassword: "",
+        confirmPassword: "",
+      }));
+    } catch (err) {
+      setError("שגיאה בחיבור לשרת. נסה שוב בעוד רגע.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderCardHeading = () => {
+    if (mode === "login") {
+      return (
+        <>
+          <h3>ברוכים השבים</h3>
+          <p>התחברו עם אימייל או מספר טלפון והמשיכו ישר לאפליקציה</p>
+        </>
+      );
+    }
+
+    if (mode === "register") {
+      return (
+        <>
+          <h3>הצטרפות ל־People+</h3>
+          <p>פתחו משתמש חדש והתחילו להתחבר לאנשים שנמצאים סביבכם</p>
+        </>
+      );
+    }
+
+    if (mode === "forgot") {
+      return (
+        <>
+          <h3>שחזור סיסמה</h3>
+          <p>הזינו את האימייל שלכם ונשלח קישור מאובטח לבחירת סיסמה חדשה</p>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <h3>בחירת סיסמה חדשה</h3>
+        <p>בחרו סיסמה חדשה והקלידו אותה שוב לצורך אימות</p>
+      </>
+    );
   };
 
   return (
@@ -177,19 +350,28 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
       <div className="wp-noise-overlay" />
       <div className="wp-map-lines" />
 
-      <div className="wp-shell">
-        <section className="wp-left">
-          <div className="wp-badge">
-            <Sparkles size={15} strokeWidth={2.2} />
-            <span>People+ Platform</span>
-          </div>
+    <div className="wp-shell">
+  <section className="wp-left">
+    <div className="wp-badge">
+      <Sparkles size={15} strokeWidth={2.2} />
+      <span>People+</span>
+    </div>
 
-          <div className="wp-brand-block">
-            <h1 className="wp-logo">People+</h1>
-            <p className="wp-tagline">
-              לגלות, לשתף ולהתחבר — לפי מה שקורה סביבכם
-            </p>
-          </div>
+    <div className="wp-brand-block">
+      <div className="wp-brand-logo-wrap">
+        <img
+          className="wp-brand-logo-image"
+          src={peopleLogo}
+          alt="People logo"
+        />
+      </div>
+
+      <div>
+        <p className="wp-tagline">
+          לגלות, לשתף ולהתחבר — לפי מה שקורה סביבכם
+        </p>
+      </div>
+    </div>
 
           <div className="wp-hero">
             <h2>גלו מי סביבכם. התחברו באמת.</h2>
@@ -241,43 +423,33 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
           </div>
         </section>
 
-        <section className="wp-right">
-          <div className="wp-card-glow" />
+      <section className="wp-right">
+  <div className="wp-card-glow" />
 
-          <div className="wp-card">
-            <div className="wp-tabs">
-              <button
-                type="button"
-                className={`wp-tab ${mode === "login" ? "active" : ""}`}
-                onClick={() => handleModeChange("login")}
-              >
-                התחברות
-              </button>
+  <div className="wp-card">
+    {(mode === "login" || mode === "register") && (
+              <div className="wp-tabs">
+                <button
+                  type="button"
+                  className={`wp-tab ${mode === "login" ? "active" : ""}`}
+                  onClick={() => handleModeChange("login")}
+                >
+                  התחברות
+                </button>
 
-              <button
-                type="button"
-                className={`wp-tab ${mode === "register" ? "active" : ""}`}
-                onClick={() => handleModeChange("register")}
-              >
-                הרשמה
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className={`wp-tab ${mode === "register" ? "active" : ""}`}
+                  onClick={() => handleModeChange("register")}
+                >
+                  הרשמה
+                </button>
+              </div>
+            )}
 
-            <div className="wp-card-head">
-              {mode === "login" ? (
-                <>
-                  <h3>ברוכים השבים</h3>
-                  <p>התחברו עם אימייל או מספר טלפון והמשיכו ישר לאפליקציה</p>
-                </>
-              ) : (
-                <>
-                  <h3>הצטרפות ל־People+</h3>
-                  <p>פתחו משתמש חדש והתחילו להתחבר לאנשים שנמצאים סביבכם</p>
-                </>
-              )}
-            </div>
+            <div className="wp-card-head">{renderCardHeading()}</div>
 
-            {mode === "login" ? (
+            {mode === "login" && (
               <form className="wp-form wp-form-animate" onSubmit={handleLogin}>
                 <label className="wp-label">
                   <span>אימייל או מספר טלפון</span>
@@ -289,6 +461,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
                       placeholder="הזינו אימייל או מספר טלפון"
                       value={form.loginIdentifier}
                       onChange={onChange}
+                      autoComplete="username"
                     />
                     <span className="wp-input-icon">
                       <BadgeCheck size={18} strokeWidth={2.2} />
@@ -306,6 +479,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
                       placeholder="הזינו סיסמה"
                       value={form.loginPassword}
                       onChange={onChange}
+                      autoComplete="current-password"
                     />
                     <span className="wp-input-icon">
                       <LockKeyhole size={18} strokeWidth={2.2} />
@@ -313,16 +487,31 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
                   </div>
                 </label>
 
+                <div className="wp-forgot-row">
+                  <button
+                    type="button"
+                    className="wp-forgot-btn"
+                    onClick={() => handleModeChange("forgot")}
+                  >
+                    שכחת את הסיסמה?
+                  </button>
+                </div>
+
                 {error && <div className="wp-error">{error}</div>}
 
-                <button className="wp-btn wp-btn-primary" type="submit">
-                  התחבר עכשיו
+                <button
+                  className="wp-btn wp-btn-primary"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "מתחבר..." : "התחבר עכשיו"}
                 </button>
 
                 <button
                   type="button"
                   className="wp-btn wp-btn-secondary"
                   onClick={onGuestEnter}
+                  disabled={isLoading}
                 >
                   כניסה כאורח להדגמה
                 </button>
@@ -338,7 +527,9 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
                   </button>
                 </p>
               </form>
-            ) : (
+            )}
+
+            {mode === "register" && (
               <form className="wp-form wp-form-animate" onSubmit={handleRegister}>
                 <div className="wp-row">
                   <label className="wp-label">
@@ -351,6 +542,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
                         placeholder="הזינו שם פרטי"
                         value={form.firstName}
                         onChange={onChange}
+                        autoComplete="given-name"
                       />
                       <span className="wp-input-icon">
                         <User size={18} strokeWidth={2.2} />
@@ -368,6 +560,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
                         placeholder="הזינו שם משפחה"
                         value={form.lastName}
                         onChange={onChange}
+                        autoComplete="family-name"
                       />
                       <span className="wp-input-icon">
                         <IdCard size={18} strokeWidth={2.2} />
@@ -386,6 +579,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
                       placeholder="אימייל (לא חובה)"
                       value={form.email}
                       onChange={onChange}
+                      autoComplete="email"
                     />
                     <span className="wp-input-icon">
                       <Mail size={18} strokeWidth={2.2} />
@@ -403,6 +597,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
                       placeholder="מספר טלפון (לא חובה)"
                       value={form.phone}
                       onChange={onChange}
+                      autoComplete="tel"
                     />
                     <span className="wp-input-icon">
                       <Phone size={18} strokeWidth={2.2} />
@@ -420,6 +615,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
                       placeholder="בחרו סיסמה"
                       value={form.password}
                       onChange={onChange}
+                      autoComplete="new-password"
                     />
                     <span className="wp-input-icon">
                       <LockKeyhole size={18} strokeWidth={2.2} />
@@ -428,14 +624,18 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
                 </label>
 
                 <p className="wp-note">
-                  יש למלא לפחות אימייל או מספר טלפון. הסיסמה תשמש אתכם גם להתחברות
-                  בהמשך.
+                  יש למלא לפחות אימייל או מספר טלפון. שחזור סיסמה במייל זמין
+                  למשתמשים שהזינו כתובת אימייל.
                 </p>
 
                 {error && <div className="wp-error">{error}</div>}
 
-                <button className="wp-btn wp-btn-primary" type="submit">
-                  הצטרף ל־People+
+                <button
+                  className="wp-btn wp-btn-primary"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "יוצר חשבון..." : "הצטרף ל־People+"}
                 </button>
 
                 <p className="wp-note wp-note-center">
@@ -451,9 +651,140 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
               </form>
             )}
 
-            <div className="wp-trust">
-              הפרטים נשמרים בצורה מאובטחת במערכת.
-            </div>
+            {mode === "forgot" && (
+              <form
+                className="wp-form wp-form-animate"
+                onSubmit={handleForgotPassword}
+              >
+                <div className="wp-security-panel">
+                  <div className="wp-security-icon">
+                    <ShieldCheck size={22} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <strong>קישור מאובטח וחד־פעמי</strong>
+                    <span>הקישור שיישלח יהיה תקף למשך 15 דקות.</span>
+                  </div>
+                </div>
+
+                <label className="wp-label">
+                  <span>כתובת אימייל</span>
+                  <div className="wp-input-wrap">
+                    <input
+                      className="wp-input"
+                      type="email"
+                      name="forgotEmail"
+                      placeholder="הזינו את האימייל של החשבון"
+                      value={form.forgotEmail}
+                      onChange={onChange}
+                      autoComplete="email"
+                    />
+                    <span className="wp-input-icon">
+                      <Mail size={18} strokeWidth={2.2} />
+                    </span>
+                  </div>
+                </label>
+
+                {error && <div className="wp-error">{error}</div>}
+                {success && (
+                  <div className="wp-success">
+                    <CheckCircle2 size={19} strokeWidth={2.2} />
+                    <span>{success}</span>
+                  </div>
+                )}
+
+                <button
+                  className="wp-btn wp-btn-primary"
+                  type="submit"
+                  disabled={isLoading || Boolean(success)}
+                >
+                  {isLoading ? "שולח קישור..." : "שלח קישור לאיפוס"}
+                </button>
+
+                <button
+                  type="button"
+                  className="wp-back-btn"
+                  onClick={() => handleModeChange("login")}
+                >
+                  <ArrowRight size={17} strokeWidth={2.2} />
+                  חזרה להתחברות
+                </button>
+              </form>
+            )}
+
+            {mode === "reset" && (
+              <form
+                className="wp-form wp-form-animate"
+                onSubmit={handleResetPassword}
+              >
+                <label className="wp-label">
+                  <span>סיסמה חדשה</span>
+                  <div className="wp-input-wrap">
+                    <input
+                      className="wp-input"
+                      type="password"
+                      name="newPassword"
+                      placeholder="הזינו סיסמה חדשה"
+                      value={form.newPassword}
+                      onChange={onChange}
+                      autoComplete="new-password"
+                    />
+                    <span className="wp-input-icon">
+                      <LockKeyhole size={18} strokeWidth={2.2} />
+                    </span>
+                  </div>
+                </label>
+
+                <label className="wp-label">
+                  <span>אימות סיסמה חדשה</span>
+                  <div className="wp-input-wrap">
+                    <input
+                      className="wp-input"
+                      type="password"
+                      name="confirmPassword"
+                      placeholder="הזינו שוב את הסיסמה"
+                      value={form.confirmPassword}
+                      onChange={onChange}
+                      autoComplete="new-password"
+                    />
+                    <span className="wp-input-icon">
+                      <ShieldCheck size={18} strokeWidth={2.2} />
+                    </span>
+                  </div>
+                </label>
+
+                <p className="wp-note">
+                  לאחר העדכון, קישור האיפוס יתבטל ולא יהיה ניתן להשתמש בו שוב.
+                </p>
+
+                {error && <div className="wp-error">{error}</div>}
+                {success && (
+                  <div className="wp-success">
+                    <CheckCircle2 size={19} strokeWidth={2.2} />
+                    <span>{success}</span>
+                  </div>
+                )}
+
+                {!success ? (
+                  <button
+                    className="wp-btn wp-btn-primary"
+                    type="submit"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "מעדכן סיסמה..." : "עדכן סיסמה"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="wp-btn wp-btn-primary"
+                    onClick={() => handleModeChange("login")}
+                  >
+                    חזרה להתחברות
+                  </button>
+                )}
+              </form>
+            )}
+
+            <div className="wp-trust">הפרטים נשמרים בצורה מאובטחת במערכת.</div>
           </div>
         </section>
       </div>

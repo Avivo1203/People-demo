@@ -1,13 +1,25 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { register, login, getMe } = require('../controllers/authController');
-const { protect } = require('../middleware/authMiddleware'); // מייבאים את ההגנה
 
-// נתיבים פתוחים (כל אחד יכול לגשת)
-router.post('/register', register);
-router.post('/login', login);
+const {
+  register,
+  login,
+  forgotPassword,
+  resetPassword,
+  getMe,
+} = require("../controllers/authController");
 
-// נתיב מוגן - רק מי ששולח Token תקין יעבור את protect ויגיע ל-getMe
-router.get('/me', protect, getMe);
+const { protect } = require("../middleware/authMiddleware");
+
+// נתיבים פתוחים
+router.post("/register", register);
+router.post("/login", login);
+
+// שחזור סיסמה
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+
+// נתיב מוגן
+router.get("/me", protect, getMe);
 
 module.exports = router;
