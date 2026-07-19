@@ -2,18 +2,9 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-// יצירת חיבור לשירות המייל
-const createMailTransporter = () => {
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_APP_PASSWORD,
-    },
-  });
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // לוגיקת הרשמה
 const register = async (req, res) => {
@@ -78,7 +69,7 @@ const register = async (req, res) => {
       { expiresIn: "30d" }
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "המשתמש נרשם בהצלחה!",
       token,
       user: {
@@ -92,7 +83,8 @@ const register = async (req, res) => {
     });
   } catch (error) {
     console.error("Register error:", error);
-    res.status(500).json({
+
+    return res.status(500).json({
       message: "שגיאת שרת פנימית",
     });
   }
@@ -138,7 +130,7 @@ const login = async (req, res) => {
       { expiresIn: "30d" }
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "התחברת בהצלחה!",
       token,
       user: {
@@ -152,7 +144,8 @@ const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({
+
+    return res.status(500).json({
       message: "שגיאת שרת פנימית",
     });
   }
@@ -169,12 +162,12 @@ const forgotPassword = async (req, res) => {
       });
     }
 
+    const successMessage =
+      "אם כתובת האימייל קיימת במערכת, נשלח אליה קישור לאיפוס הסיסמה.";
+
     const user = await User.findOne({
       email: cleanEmail,
     });
-
-    const successMessage =
-      "אם כתובת האימייל קיימת במערכת, נשלח אליה קישור לאיפוס הסיסמה.";
 
     if (!user) {
       return res.status(200).json({
@@ -199,11 +192,9 @@ const forgotPassword = async (req, res) => {
 
     const resetUrl = `${clientUrl}/?resetToken=${resetToken}`;
 
-    const transporter = createMailTransporter();
-
-    await transporter.sendMail({
-      from: `"People+" <${process.env.EMAIL_USER}>`,
-      to: user.email,
+    const { data, error } = await resend.emails.send({
+      from: "People+ <onboarding@resend.dev>",
+      to: [user.email],
       subject: "איפוס סיסמה לחשבון People+",
       html: `
         <div
@@ -252,6 +243,21 @@ const forgotPassword = async (req, res) => {
         </div>
       `,
     });
+
+    if (error) {
+      console.error("Resend email error:", error);
+
+      user.resetPasswordToken = null;
+      user.resetPasswordExpires = null;
+
+      await user.save();
+
+      return res.status(500).json({
+        message: "לא ניתן לשלוח כרגע את קישור האיפוס",
+      });
+    }
+
+    console.log("Reset email sent successfully:", data?.id);
 
     return res.status(200).json({
       message: successMessage,
@@ -339,11 +345,11 @@ const getMe = async (req, res) => {
       });
     }
 
-    res.status(200).json(user);
+    return res.status(200).json(user);
   } catch (error) {
     console.error("Get Me error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: "שגיאת שרת פנימית",
     });
   }
