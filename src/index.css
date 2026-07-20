@@ -1746,15 +1746,14 @@ video {
     --mobile-page-gap: 8px;
     --mobile-side-gap: 9px;
   }
-
-  html,
-  body,
-  #root {
-    width: 100%;
-    min-height: 100%;
-    overflow: hidden;
-  }
-
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
   body {
     background: var(--bg-app);
   }
