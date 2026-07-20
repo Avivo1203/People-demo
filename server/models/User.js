@@ -41,18 +41,6 @@ const UserSchema = new mongoose.Schema({
     required: true,
   },
 
-  // טוקן מוצפן לאיפוס סיסמה
-  resetPasswordToken: {
-    type: String,
-    default: null,
-  },
-
-  // תאריך תפוגת קישור איפוס הסיסמה
-  resetPasswordExpires: {
-    type: Date,
-    default: null,
-  },
-
   createdAt: {
     type: Date,
     default: Date.now,

@@ -1195,63 +1195,6 @@ video {
   font-weight: 750;
 }
 
-.status-form-media-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.status-media-btn {
-  min-height: 42px;
-  padding: 0 15px;
-  border-radius: 15px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--primary-dark);
-  background: #ffffff;
-  border: 1px solid #bfdbfe;
-  font-size: 14px;
-  font-weight: 900;
-}
-
-.status-media-btn:hover {
-  background: #f8fbff;
-  transform: translateY(-1px);
-}
-
-.status-image-preview-wrap {
-  position: relative;
-  width: 82px;
-  height: 82px;
-  overflow: hidden;
-  border-radius: 18px;
-  background: var(--surface-soft);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-}
-
-.status-image-preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.status-image-remove {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 28px;
-  height: 28px;
-  border-radius: 11px;
-  display: grid;
-  place-items: center;
-  color: var(--text-soft);
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid var(--border);
-}
-
 .status-form-footer {
   display: flex;
   align-items: center;
@@ -1800,10 +1743,19 @@ video {
 @media (max-width: 640px) {
   :root {
     --mobile-bottom-safe: max(14px, env(safe-area-inset-bottom));
+    --mobile-page-gap: 8px;
+    --mobile-side-gap: 9px;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-height: 100%;
+    overflow: hidden;
   }
 
   body {
-    overflow: hidden;
     background: var(--bg-app);
   }
 
@@ -1811,7 +1763,6 @@ video {
   .navtab-btn:hover,
   .status-post-card:hover,
   .status-form-submit:hover,
-  .status-media-btn:hover,
   .topbar-action-btn:hover {
     transform: none;
   }
@@ -1825,35 +1776,48 @@ video {
     min-height: 100dvh !important;
   }
 
+  /* ---------- MOBILE TOP BAR ---------- */
+
   .topbar-shell {
-    top: 10px;
+    top: 8px;
     width: calc(100% - 18px);
+    max-width: none;
   }
 
   .topbar-stack {
-    gap: 8px;
+    gap: var(--mobile-page-gap);
   }
 
   .topbar-row {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--mobile-page-gap);
   }
 
   .topbar-actions {
+    order: 4;
     width: 100%;
+    min-height: 46px;
     justify-content: space-between;
-    gap: 7px;
-    padding: 7px;
-    border-radius: 20px;
+    gap: 5px;
+    padding: 5px;
+    border-radius: 17px;
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(226, 232, 240, 0.96);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.1);
   }
 
   .topbar-action-btn {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    border-radius: 15px;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 13px;
     box-shadow: none;
+  }
+
+  .topbar-action-btn svg {
+    width: 18px;
+    height: 18px;
   }
 
   .topbar-user-pill {
@@ -1863,46 +1827,63 @@ video {
 
   .topbar-user-status {
     width: 100%;
+    min-width: 0;
+    min-height: 36px;
     justify-content: center;
-    min-height: 38px;
     padding: 0 8px;
-    font-size: 12px;
+    font-size: 11px;
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
+
+  /* ---------- MAP / STATUS TABS ---------- */
 
   .navtabs-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--mobile-page-gap);
   }
 
   .navtabs-card,
   .radius-card,
-  .searchbar-input-wrap,
-  .topbar-actions {
-    background: rgba(255, 255, 255, 0.96);
+  .searchbar-input-wrap {
+    background: rgba(255, 255, 255, 0.97);
     border-color: rgba(226, 232, 240, 0.96);
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.1);
   }
 
   .navtabs-card {
-    padding: 6px;
-    border-radius: 20px;
+    order: 1;
+    min-height: 0;
+    padding: 4px;
+    border-radius: 17px;
   }
 
   .navtabs-inner {
-    min-height: unset;
-    gap: 6px;
+    min-height: 44px;
+    gap: 4px;
+  }
+
+  .navtabs-indicator {
+    width: calc(50% - 2px);
+    border-radius: 14px;
+  }
+
+  .navtabs-indicator.status-active {
+    transform: translateX(calc(100% + 4px));
   }
 
   .navtab-btn {
-    min-height: 52px;
-    padding: 8px 9px;
-    border-radius: 16px;
+    min-height: 44px;
+    padding: 5px 8px;
+    border-radius: 14px;
+    gap: 7px;
   }
 
   .navtab-title {
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1;
   }
 
   .navtab-subtitle {
@@ -1910,36 +1891,57 @@ video {
   }
 
   .navtab-icon {
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    border-radius: 12px;
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    border-radius: 10px;
   }
 
   .navtab-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 
+  .navtabs-hide-btn {
+    top: -5px;
+    left: -5px;
+    width: 36px;
+    height: 36px;
+    border-radius: 13px;
+  }
+
+  /* ---------- RADIUS ---------- */
+
   .radius-card {
-    min-height: unset;
-    padding: 10px 12px;
-    border-radius: 20px;
+    order: 2;
+    min-height: 0;
+    padding: 8px 10px 9px;
+    border-radius: 17px;
   }
 
   .radius-top {
-    margin-bottom: 7px;
+    margin-bottom: 5px;
+    gap: 8px;
+  }
+
+  .radius-title-wrap {
+    gap: 7px;
   }
 
   .radius-icon {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    border-radius: 12px;
+    width: 29px;
+    height: 29px;
+    min-width: 29px;
+    border-radius: 10px;
+  }
+
+  .radius-icon svg {
+    width: 16px;
+    height: 16px;
   }
 
   .radius-title {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .radius-subtitle {
@@ -1947,270 +1949,381 @@ video {
   }
 
   .radius-value {
-    padding: 5px 9px;
-    font-size: 12px;
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .radius-slider-wrap {
+    padding-top: 1px;
   }
 
   .radius-slider {
-    height: 6px;
+    height: 5px;
   }
 
   .radius-slider::-webkit-slider-thumb {
-    width: 19px;
-    height: 19px;
+    width: 18px;
+    height: 18px;
     border-width: 3px;
+    box-shadow:
+      0 5px 14px rgba(37, 99, 235, 0.28),
+      0 0 0 4px rgba(37, 99, 235, 0.08);
   }
 
   .radius-slider::-moz-range-thumb {
-    width: 19px;
-    height: 19px;
+    width: 18px;
+    height: 18px;
     border-width: 3px;
   }
 
   .radius-marks {
-    margin-top: 5px;
-    font-size: 9px;
+    margin-top: 4px;
+    font-size: 8px;
+  }
+
+  .radius-action-wrap {
+    margin-top: 7px;
   }
 
   .radius-search-btn {
-    min-height: 36px;
+    width: 100%;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 11px;
+  }
+
+  /* ---------- SEARCH ---------- */
+
+  .searchbar-shell {
+    order: 3;
+  }
+
+  .searchbar-input-wrap {
+    min-height: 42px;
+    border-radius: 15px;
+  }
+
+  .searchbar-input {
+    height: 42px;
+    padding: 0 42px;
+    font-size: 13px;
+  }
+
+  .searchbar-icon {
+    left: 13px;
+  }
+
+  .searchbar-icon svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .searchbar-clear-btn {
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+  }
+
+  .searchbar-dropdown {
+    max-height: 220px;
+    border-radius: 15px;
+  }
+
+  /* ---------- MAP VIEW ---------- */
+
+  .realmap-shell {
+    padding-top: 0;
+  }
+
+  .leaflet-container {
+    z-index: 0;
+  }
+
+  .map-fab-panel {
+    left: var(--mobile-side-gap);
+    right: var(--mobile-side-gap);
+    bottom: calc(10px + var(--mobile-bottom-safe));
+    gap: 6px;
+  }
+
+  .map-fab,
+  .map-hint {
+    width: 100%;
+    min-height: 40px;
     border-radius: 14px;
     font-size: 12px;
   }
 
-  .searchbar-input-wrap {
-    min-height: 48px;
-    border-radius: 18px;
+  .map-hint {
+    display: none;
   }
 
-  .searchbar-input {
-    height: 48px;
-    padding: 0 45px;
-    font-size: 14px;
+  .map-popup-card {
+    min-width: 165px;
   }
 
-  .searchbar-clear-btn {
-    width: 30px;
-    height: 30px;
-    border-radius: 11px;
+  /* ---------- STATUS VIEW ---------- */
+
+  .topbar-shell-status {
+    position: absolute;
   }
 
-  .searchbar-dropdown {
-    max-height: 245px;
-    border-radius: 18px;
+  .topbar-shell-status .radius-card,
+  .topbar-shell-status .searchbar-shell {
+    display: none;
+  }
+
+  .topbar-shell-status .topbar-stack,
+  .topbar-shell-status .topbar-row,
+  .topbar-shell-status .navtabs-wrapper {
+    gap: 6px;
+  }
+
+  .topbar-shell-status .topbar-actions {
+    min-height: 44px;
   }
 
   .status-fullscreen {
+    width: 100%;
     height: 100dvh;
-    padding: 250px 12px calc(24px + var(--mobile-bottom-safe));
+    padding:
+      116px
+      var(--mobile-side-gap)
+      calc(20px + var(--mobile-bottom-safe));
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    scroll-padding-top: 116px;
   }
 
   .status-area-shell {
-    gap: 12px;
+    width: 100%;
+    gap: 10px;
   }
 
   .status-area-hero {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   .status-area-hero-text,
   .status-composer-card,
   .status-post-card,
   .status-feed-empty {
-    border-radius: 22px;
+    border-radius: 18px;
   }
 
   .status-area-hero-text {
-    padding: 16px;
+    padding: 13px;
   }
 
   .status-area-eyebrow {
-    margin-bottom: 5px;
-    font-size: 11px;
+    margin-bottom: 3px;
+    font-size: 10px;
   }
 
   .status-area-hero-text h2 {
-    font-size: 21px;
+    margin-bottom: 5px;
+    font-size: 19px;
   }
 
   .status-area-hero-text p {
-    font-size: 13px;
-    line-height: 1.55;
+    font-size: 12px;
+    line-height: 1.45;
   }
 
   .status-area-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 7px;
   }
 
   .status-stat-box {
-    min-height: 72px;
-    padding: 12px;
-    border-radius: 18px;
+    min-height: 62px;
+    padding: 9px;
+    border-radius: 16px;
   }
 
   .status-stat-box strong {
-    font-size: 20px;
+    margin-bottom: 3px;
+    font-size: 18px;
   }
 
   .status-stat-box span {
-    font-size: 11px;
+    font-size: 10px;
+  }
+
+  .status-tabs {
+    margin-top: 1px;
   }
 
   .status-tabs button {
-    min-height: 34px;
-    padding: 0 13px;
-    font-size: 12px;
+    min-height: 31px;
+    padding: 0 12px;
+    font-size: 11px;
   }
 
   .status-composer-card {
-    padding: 15px;
+    padding: 13px;
+  }
+
+  .status-composer-head {
+    margin-bottom: 10px;
   }
 
   .status-composer-head h3 {
-    font-size: 17px;
+    margin-bottom: 4px;
+    font-size: 16px;
   }
 
   .status-composer-head p {
-    font-size: 13px;
-    line-height: 1.55;
+    font-size: 12px;
+    line-height: 1.45;
   }
 
   .status-form-pro,
   .status-form-simple {
-    gap: 11px;
+    gap: 9px;
+  }
+
+  .status-form-userchip {
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .status-form-field {
+    gap: 6px;
+  }
+
+  .status-form-field label {
+    font-size: 12px;
   }
 
   .status-form-field textarea {
-    min-height: 86px;
+    min-height: 78px;
+    resize: none;
   }
 
   .status-form-field input,
   .status-form-field textarea,
   .status-comment-input {
-    border-radius: 16px;
-    padding: 12px 13px;
-    font-size: 14px;
+    border-radius: 14px;
+    padding: 10px 11px;
+    font-size: 13px;
   }
 
-  .status-form-media-row {
-    gap: 9px;
-  }
-
-  .status-media-btn,
-  .status-form-submit {
-    width: 100%;
-    min-height: 42px;
-    justify-content: center;
-    border-radius: 15px;
-  }
-
-  .status-image-preview-wrap {
-    width: 72px;
-    height: 72px;
-    border-radius: 15px;
+  .status-form-counter {
+    font-size: 11px;
   }
 
   .status-form-footer {
     flex-direction: column;
     align-items: stretch;
-    gap: 9px;
+    gap: 7px;
   }
 
   .status-form-note {
     min-width: 0;
-    font-size: 12px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .status-form-submit {
+    width: 100%;
+    min-height: 40px;
+    justify-content: center;
+    border-radius: 14px;
   }
 
   .status-feed-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 
   .status-post-card {
-    padding: 15px;
-    gap: 11px;
+    padding: 13px;
+    gap: 10px;
   }
 
   .status-post-avatar {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    border-radius: 14px;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 13px;
   }
 
   .status-post-name {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .status-post-time {
-    font-size: 12px;
-  }
-
-  .status-post-badge {
-    min-height: 28px;
     font-size: 11px;
   }
 
+  .status-post-badge {
+    min-height: 26px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .status-post-body {
+    padding: 11px 12px;
+    border-radius: 15px;
+  }
+
   .status-post-text {
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .status-inline-reply {
+    min-height: 38px;
+    border-radius: 13px;
+    font-size: 12px;
   }
 
   .status-post-actions {
     flex-direction: column;
+    gap: 7px;
   }
 
   .status-action-btn {
     width: 100%;
-    min-height: 41px;
+    min-height: 39px;
   }
 
-  .map-fab-panel {
-    left: 12px;
-    right: 12px;
-    bottom: 14px;
-  }
-
-  .map-fab,
-  .map-hint {
-    width: 100%;
-  }
-
-  .map-popup-card {
-    min-width: 170px;
-  }
+  /* ---------- DETAILS / COMMENTS ---------- */
 
   .status-details-overlay {
     align-items: flex-end;
-    padding: 10px;
+    padding: 8px;
   }
 
   .status-details-modal {
     width: 100%;
-    max-height: 88dvh;
-    padding: 18px;
-    border-radius: 24px 24px 18px 18px;
+    max-height: 90dvh;
+    padding: 16px;
+    border-radius: 22px 22px 16px 16px;
   }
 
   .status-details-header {
-    padding-left: 38px;
-    margin-bottom: 14px;
+    padding-left: 36px;
+    margin-bottom: 12px;
   }
 
   .status-details-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 15px;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
   }
 
   .clean-status-body p {
-    font-size: 15px;
-    line-height: 1.7;
+    font-size: 14px;
+    line-height: 1.65;
   }
 
   .clean-status-footer {
@@ -2226,29 +2339,39 @@ video {
 
 @media (max-width: 380px) {
   .topbar-shell {
-    width: calc(100% - 14px);
-  }
-
-  .navtab-title {
-    font-size: 13px;
-  }
-
-  .radius-title {
-    font-size: 12px;
-  }
-
-  .radius-marks {
-    font-size: 8px;
-  }
-
-  .status-fullscreen {
-    padding-left: 9px;
-    padding-right: 9px;
+    width: calc(100% - 12px);
   }
 
   .topbar-action-btn {
-    width: 41px;
-    height: 41px;
-    min-width: 41px;
+    width: 35px;
+    height: 35px;
+    min-width: 35px;
+  }
+
+  .topbar-user-status {
+    font-size: 10px;
+  }
+
+  .navtab-title {
+    font-size: 12px;
+  }
+
+  .radius-title {
+    font-size: 11px;
+  }
+
+  .radius-marks {
+    font-size: 7px;
+  }
+
+  .status-fullscreen {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  .status-area-hero-text,
+  .status-composer-card,
+  .status-post-card {
+    border-radius: 16px;
   }
 }

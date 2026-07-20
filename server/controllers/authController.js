@@ -1,10 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
-const { Resend } = require("resend");
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 // לוגיקת הרשמה
 const register = async (req, res) => {
@@ -151,193 +147,10 @@ const login = async (req, res) => {
   }
 };
 
-// שליחת קישור לאיפוס סיסמה
-const forgotPassword = async (req, res) => {
-  try {
-    const cleanEmail = req.body.email?.trim().toLowerCase();
-
-    if (!cleanEmail) {
-      return res.status(400).json({
-        message: "נא להזין כתובת אימייל",
-      });
-    }
-
-    const successMessage =
-      "אם כתובת האימייל קיימת במערכת, נשלח אליה קישור לאיפוס הסיסמה.";
-
-    const user = await User.findOne({
-      email: cleanEmail,
-    });
-
-    if (!user) {
-      return res.status(200).json({
-        message: successMessage,
-      });
-    }
-
-    const resetToken = crypto.randomBytes(32).toString("hex");
-
-    const hashedResetToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-
-    user.resetPasswordToken = hashedResetToken;
-    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
-
-    await user.save();
-
-    const clientUrl =
-      process.env.CLIENT_URL || "https://people-demo.onrender.com";
-
-    const resetUrl = `${clientUrl}/?resetToken=${resetToken}`;
-
-    const { data, error } = await resend.emails.send({
-      from: "People+ <onboarding@resend.dev>",
-      to: [user.email],
-      subject: "איפוס סיסמה לחשבון People+",
-      html: `
-        <div
-          dir="rtl"
-          style="
-            font-family: Arial, sans-serif;
-            max-width: 560px;
-            margin: 0 auto;
-            padding: 32px;
-            color: #10203a;
-          "
-        >
-          <h1 style="color: #0d7ee2; margin-bottom: 24px;">
-            People+
-          </h1>
-
-          <h2>איפוס סיסמה</h2>
-
-          <p>
-            התקבלה בקשה לאיפוס הסיסמה של החשבון שלך.
-          </p>
-
-          <p>
-            הקישור יהיה תקף למשך 15 דקות ולשימוש חד־פעמי בלבד.
-          </p>
-
-          <a
-            href="${resetUrl}"
-            style="
-              display: inline-block;
-              margin: 18px 0;
-              padding: 14px 24px;
-              border-radius: 12px;
-              background: #0d7ee2;
-              color: #ffffff;
-              text-decoration: none;
-              font-weight: bold;
-            "
-          >
-            בחירת סיסמה חדשה
-          </a>
-
-          <p style="font-size: 14px; color: #667085;">
-            אם לא ביקשת לאפס את הסיסמה, אפשר להתעלם מהודעה זו.
-          </p>
-        </div>
-      `,
-    });
-
-    if (error) {
-      console.error("Resend email error:", error);
-
-      user.resetPasswordToken = null;
-      user.resetPasswordExpires = null;
-
-      await user.save();
-
-      return res.status(500).json({
-        message: "לא ניתן לשלוח כרגע את קישור האיפוס",
-      });
-    }
-
-    console.log("Reset email sent successfully:", data?.id);
-
-    return res.status(200).json({
-      message: successMessage,
-    });
-  } catch (error) {
-    console.error("Forgot password error:", error);
-
-    return res.status(500).json({
-      message: "לא ניתן לשלוח כרגע את קישור האיפוס",
-    });
-  }
-};
-
-// עדכון הסיסמה באמצעות קישור האיפוס
-const resetPassword = async (req, res) => {
-  try {
-    const { token, password, confirmPassword } = req.body;
-
-    if (!token || !password || !confirmPassword) {
-      return res.status(400).json({
-        message: "נא למלא את כל השדות",
-      });
-    }
-
-    if (password.length < 4) {
-      return res.status(400).json({
-        message: "הסיסמה חייבת להיות באורך של 4 תווים לפחות",
-      });
-    }
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({
-        message: "הסיסמאות אינן תואמות",
-      });
-    }
-
-    const hashedResetToken = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
-
-    const user = await User.findOne({
-      resetPasswordToken: hashedResetToken,
-      resetPasswordExpires: {
-        $gt: Date.now(),
-      },
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        message: "קישור האיפוס אינו תקין או שפג תוקפו",
-      });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-
-    user.resetPasswordToken = null;
-    user.resetPasswordExpires = null;
-
-    await user.save();
-
-    return res.status(200).json({
-      message: "הסיסמה עודכנה בהצלחה",
-    });
-  } catch (error) {
-    console.error("Reset password error:", error);
-
-    return res.status(500).json({
-      message: "שגיאה בעדכון הסיסמה",
-    });
-  }
-};
-
 // קבלת פרטי המשתמש הנוכחי
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select(
-      "-password -resetPasswordToken -resetPasswordExpires"
-    );
+    const user = await User.findById(req.userId).select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -358,7 +171,5 @@ const getMe = async (req, res) => {
 module.exports = {
   register,
   login,
-  forgotPassword,
-  resetPassword,
   getMe,
 };
