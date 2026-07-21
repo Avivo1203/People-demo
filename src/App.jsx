@@ -6,10 +6,10 @@ import WelcomePage from "./WelcomePage";
 import TopBar from "./components/TopBar";
 import ProfileCard from "./components/ProfileCard";
 import "./index.css";
+import { API_BASE_URL } from "./config/api";
 
 const STATUS_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_RADIUS = 1500;
-const API_BASE_URL = "https://people-demo.onrender.com";
 
 function loadFromStorage(key, fallback) {
   try {
