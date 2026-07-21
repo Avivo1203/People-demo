@@ -1,4 +1,5 @@
 import peopleLogo from "./assets/people-logo.png";
+import peopleQr from "./assets/people-qr.png";
 import React, { useMemo, useState } from "react";
 import {
   Mail,
@@ -308,6 +309,22 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
           <div className="wp-card-glow" />
 
           <div className="wp-card">
+            {(mode === "login" || mode === "register") && (
+  <div className="wp-qr-section">
+    <div className="wp-qr-image-wrap">
+      <img
+        src={peopleQr}
+        alt="People QR"
+        className="wp-qr-image"
+      />
+    </div>
+
+    <div className="wp-qr-content">
+      <strong>סרקו לפתיחה מהירה</strong>
+      <span>פתחו את People+ ישירות מהטלפון</span>
+    </div>
+  </div>
+)}
             {(mode === "login" || mode === "register") && (
               <div className="wp-tabs">
                 <button
