@@ -10,6 +10,7 @@ import {
 import { X, Clock3, MapPin, Search } from "lucide-react";
 import L from "leaflet";
 import TimeAgo from "./TimeAgo";
+import { API_BASE_URL } from "../config/api";
 import "leaflet/dist/leaflet.css";
 
 function FlyTo({ center, zoom = 14 }) {
@@ -145,7 +146,7 @@ export default function RealMap({
       }
 
       const response = await fetch(
-        `https://people-demo.onrender.com/api/location/nearby?radius=${radius}`,
+        `${API_BASE_URL}/api/location/nearby?radius=${radius}`,
         {
           method: "GET",
           headers: {

@@ -1,4 +1,5 @@
 import peopleLogo from "./assets/people-logo.png";
+import { API_BASE_URL } from "./config/api";
 import React, { useMemo, useState } from "react";
 import {
   Mail,
@@ -15,8 +16,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import "./WelcomePage.css";
-
-const API_URL = "https://people-demo.onrender.com";
 
 export default function WelcomePage({ onEnter, onGuestEnter }) {
   const [mode, setMode] = useState("login");
@@ -111,7 +110,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,8 +158,7 @@ export default function WelcomePage({ onEnter, onGuestEnter }) {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
